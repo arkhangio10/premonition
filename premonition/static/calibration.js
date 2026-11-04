@@ -53,7 +53,7 @@ function photo(capture) {
   $("camera-image").hidden=false; $("camera-placeholder").hidden=true;
   const q=capture.quality;
   $("camera-facts").textContent=`${capture.width} × ${capture.height} · ${capture.restored ? "Saved snapshot" : "Snapshot"} · ${(q.saturated*100).toFixed(1)}% saturated pixels`;
-  $("camera-guidance").textContent=q.saturated>.2 ? "Exposure is high. Reduce glare and light the work area evenly before calibrating vision." : "Check the framing and focus. Vision thresholds still need calibration.";
+  $("camera-guidance").textContent=q.saturated>.2 ? "Exposure is high. Reduce glare and light the work area evenly before calibrating vision." : "Check the framing and focus. Open Autonomy to review the recorded bench data.";
   scene(state?.scene_analysis, capture);
   drawRegions();
 }
@@ -148,7 +148,7 @@ function render(data) {
   $("controller-summary").textContent=!reading ? "Check the arm to read its outputs." : reading.mode1&16 ? "Controller asleep · outputs off" : data.pose_blockers.length ? "Controller needs setup" : "Outputs active · ready to record";
   $("joint-readings").replaceChildren(...Object.entries(JOINTS).map(([key,label])=>{const row=element("tr",""), value=reading?.commanded_us?.[key]; row.append(element("th",label),element("td",!reading ? "Not read" : value===null ? "Off" : reading.prescale!==121 || value===undefined ? "PWM setup needed" : `${value} µs`)); row.firstChild.scope="row"; return row;}));
   $("pose-ready").textContent=data.pose_blockers.length ? "Setup needed" : "Ready to record";
-  $("first-move-guidance").textContent=!data.stop_procedure_confirmed ? "Identify how to cut servo power before the first movement." : !reading ? "Check the arm, mark the work areas and record the observation pose." : data.pose_blockers.length ? "The controller needs setup before teaching more positions." : "Mark the pick-up and destination areas. The approach, grasp, lift and place positions still need to be taught.";
+  $("first-move-guidance").textContent=!data.stop_procedure_confirmed ? "Identify how to cut servo power before the first movement." : !reading ? "Run arm tools from the terminal. Open Autonomy to watch the bench or replay recorded moves." : data.pose_blockers.length ? "The controller needs setup before teaching more positions." : "Use terminal tools to run the arm. Open Autonomy for the bench, learned settings and recorded moves.";
   $("pose-guidance").textContent=!reading ? "Check the arm first. A pose records the commanded pulses you have checked on the real arm." : data.pose_blockers.length ? "The outputs are not ready. Establish the initial joint positions before recording a pose." : "Observe the arm, name the pose and confirm its position before recording.";
   $("saved-poses").replaceChildren(...(data.poses.length ? data.poses.map(p=>element("li",p.name)) : [element("li","No poses recorded yet.")]));
   $("reference-poses").replaceChildren(...(data.reference_poses?.poses || []).map(p=>{const row=element("tr",""); row.append(element("th",p.name),...Object.keys(JOINTS).map(j=>element("td",`${p.complete_vector_us[j]} µs`))); row.firstChild.scope="row"; return row;}));

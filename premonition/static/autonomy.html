@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F1F3F4"><title>Premonition arm</title><link rel="icon" href="data:,">
+  <style>
+    @font-face { font-family:Unbounded; src:url("/static/unbounded.ttf") format("truetype"); font-weight:200 900; font-display:swap; }
+    :root {
+      --wall:#F1F3F4; --ink:#17202B; --quiet:#5D6873; --rule:#D6DBE0; --arm:#1677E5;
+      --sponge:#F08A24; --walnut:#6E4B33; --ok:#2F7D5B; --stop:#B83A2E;
+      color-scheme:light; font:16px/1.5 "Segoe UI", system-ui, sans-serif; color:var(--ink); background:var(--wall);
+    }
+    * { box-sizing:border-box; }
+    [hidden] { display:none !important; }
+    body, h1, h2, p, figure, dl, dd, ol { margin:0; }
+    ol { padding:0; list-style:none; }
+    button, select, input { font:inherit; color:inherit; }
+    button { cursor:pointer; }
+    :focus-visible { outline:2px solid var(--arm); outline-offset:3px; }
+    .bench { max-width:1520px; margin:0 auto; padding:0 32px 56px; }
+    nav { display:flex; flex-wrap:wrap; gap:4px 24px; padding:18px 0; font-size:14px; color:var(--quiet); }
+    nav a { color:inherit; text-decoration:none; }
+    nav a:hover, nav [aria-current], nav .home { color:var(--ink); }
+    nav .home { font-weight:600; margin-right:8px; }
+    .run { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:24px; padding:16px 0 28px; }
+    #phase { font:500 clamp(38px, 6.6vw, 92px)/1.04 Unbounded, "Segoe UI", sans-serif; letter-spacing:-.035em; overflow-wrap:anywhere; }
+    #phase[data-tone="ok"] { color:var(--ok); }
+    #phase[data-tone="stop"] { color:var(--stop); }
+    .modes { grid-column:2; grid-row:1; align-self:center; }
+    #detail, #instruction { grid-column:1 / -1; }
+    #detail { margin-top:14px; font-size:20px; line-height:1.4; max-width:62ch; overflow-wrap:anywhere; }
+    #instruction { margin-top:4px; color:var(--quiet); max-width:70ch; overflow-wrap:anywhere; }
+    .switch { display:inline-flex; gap:2px; padding:2px; border:1px solid var(--ink); border-radius:8px; }
+    .switch button { min-height:36px; padding:0 16px; border:0; border-radius:6px; background:none; }
+    .switch [aria-pressed="true"] { background:var(--ink); color:var(--wall); }
+    .stage { display:grid; grid-template-columns:minmax(0, 11fr) minmax(0, 14fr); gap:24px; min-height:clamp(440px, 100vh - 360px, 760px); }
+    .arm { grid-column:2; grid-row:1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+    .stage[data-mode="replay"] .cams { display:none; }
+    .stage[data-mode="replay"] .arm { grid-column:1 / -1; }
+    .arm-view { position:relative; flex:1; min-height:360px; }
+    .arm-view canvas { position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:pan-y; }
+    .arm-view canvas.dragging { cursor:grabbing; touch-action:none; }
+    figcaption { font-size:14px; color:var(--quiet); }
+    figcaption .frozen { color:var(--stop); }
+    figcaption strong { color:var(--ink); font-weight:600; }
+    .cams { grid-column:1; grid-row:1; display:flex; flex-direction:column; gap:14px; min-width:0; }
+    .cam-switch { display:none; }
+    .cam { display:grid; gap:6px; }
+    .frame { aspect-ratio:16 / 9; background:var(--rule); border-radius:4px; overflow:hidden; }
+    .frame img { display:block; width:100%; height:100%; object-fit:contain; }
+    .cam[data-off] img { visibility:hidden; }
+    .cam[data-off] .frame { background:none; outline:1px solid var(--rule); outline-offset:-1px; }
+    .empty { max-width:40ch; }
+    .readout { display:grid; grid-template-columns:auto minmax(0, 1fr); align-items:end; gap:16px 48px; margin-top:28px; padding-top:20px; border-top:1px solid var(--rule); }
+    .pulses { display:grid; grid-template-columns:repeat(6, auto); gap:4px 32px; }
+    .pulses dt, th { font-size:13px; color:var(--quiet); }
+    .pulses dd { font-size:28px; line-height:1.2; font-variant-numeric:tabular-nums; }
+    .note { font-size:14px; color:var(--quiet); }
+    .replay { grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; }
+    .replay select { max-width:100%; min-height:40px; padding:0 8px; border:1px solid var(--quiet); border-radius:6px; background:var(--wall); }
+    #play { min-width:84px; min-height:40px; border:1px solid var(--ink); border-radius:8px; background:var(--ink); color:var(--wall); }
+    #scrub { flex:1 1 220px; min-width:0; accent-color:var(--arm); }
+    #clock { font-size:20px; font-variant-numeric:tabular-nums; }
+    .log { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:32px 56px; margin-top:28px; padding-top:24px; border-top:1px solid var(--rule); }
+    .log h2 { font-size:20px; font-weight:600; margin-bottom:10px; }
+    table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+    th { text-align:left; font-weight:400; padding:0 12px 6px 0; }
+    td { padding:8px 12px 8px 0; border-top:1px solid var(--rule); vertical-align:top; }
+    td:not(:last-child) { white-space:nowrap; }
+    td small, .verdict-reason { display:block; color:var(--quiet); font-size:14px; }
+    .ok { color:var(--ok); }
+    .log .note { margin-top:8px; }
+    #verdicts li { padding:10px 0; border-top:1px solid var(--rule); overflow-wrap:anywhere; }
+    #muse, #learned-summary, #attempts-summary { color:var(--quiet); margin-bottom:8px; }
+    #attempts li { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:2px 16px; padding:10px 0; border-top:1px solid var(--rule); }
+    #attempts strong { font-weight:600; overflow-wrap:anywhere; }
+    #attempts time { color:var(--quiet); font-size:14px; font-variant-numeric:tabular-nums; }
+    #attempts p { grid-column:1 / -1; color:var(--quiet); font-size:14px; overflow-wrap:anywhere; }
+    .shots { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; margin-top:6px; }
+    .shots a { display:grid; gap:2px; color:var(--quiet); font-size:13px; text-decoration:none; }
+    .shots img { display:block; width:100%; aspect-ratio:32 / 9; object-fit:cover; border-radius:4px; background:var(--rule); }
+    .scroll { overflow-x:auto; }
+    .chance { width:30%; }
+    .bar { display:block; height:4px; margin-top:4px; border-radius:2px; background:linear-gradient(90deg, var(--arm) calc(var(--rate) * 100%), var(--rule) 0); }
+    .prior { color:var(--quiet); }
+    .prior .bar { background:linear-gradient(90deg, transparent calc(var(--rate) * 100%), var(--rule) 0), repeating-linear-gradient(90deg, var(--quiet) 0 3px, var(--rule) 3px 6px); }
+    @media (max-width:899px) {
+      .bench { padding:0 16px 40px; }
+      .run { grid-template-columns:minmax(0, 1fr); padding-bottom:24px; }
+      .modes { grid-column:1; grid-row:2; justify-self:start; margin-top:16px; }
+      #detail { font-size:18px; }
+      .stage { grid-template-columns:minmax(0, 1fr); min-height:0; }
+      .arm, .cams { grid-column:1; grid-row:auto; }
+      .arm-view { flex:none; aspect-ratio:1; min-height:0; }
+      .cam-switch { display:inline-flex; align-self:flex-start; }
+      .cams[data-show="c922"] .cam[data-view="usb"], .cams[data-show="usb"] .cam[data-view="c922"] { display:none; }
+      .readout { grid-template-columns:minmax(0, 1fr); }
+      .pulses { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px 16px; }
+      .pulses dd { font-size:24px; }
+      .log { grid-template-columns:minmax(0, 1fr); }
+      #learned th, #learned td { padding-right:8px; }
+      #learned :is(th, td):last-child { padding-right:0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="bench">
+    <nav aria-label="Main navigation"><a class="home" href="/">Premonition</a><a href="/">Workspace</a><a href="/calibration">Teach arm</a><a aria-current="page" href="/autonomy">Autonomy</a></nav>
+    <header class="run">
+      <h1 id="phase">Waiting</h1>
+      <div class="switch modes" role="group" aria-label="View"><button type="button" data-mode="live" aria-pressed="true">Live</button><button type="button" data-mode="replay" aria-pressed="false">Replay</button></div>
+      <p id="detail" aria-live="polite">No run yet.</p>
+      <p id="instruction"></p>
+    </header>
+    <section class="stage" aria-label="The arm and both cameras">
+      <figure class="arm">
+        <div class="arm-view"><canvas id="arm" role="img" aria-label="3D view of the arm, the poses it has scanned and the volume it can reach"></canvas></div>
+        <figcaption><strong id="model-name">Schematic arm.</strong> <span id="model-note"></span></figcaption>
+      </figure>
+      <div class="cams" id="cams" data-show="c922">
+        <div class="switch cam-switch" role="group" aria-label="Camera"><button type="button" data-view="c922" aria-pressed="true">Front</button><button type="button" data-view="usb" aria-pressed="false">Side</button></div>
+        <p class="empty" id="no-cams" hidden>Both cameras appear here while a run is going. Start one from the terminal.</p>
+        <figure class="cam" data-view="c922"><div class="frame"><img src="http://127.0.0.1:8767/stream/c922" alt="Front camera, live"></div><figcaption>Front camera <span class="frozen"></span></figcaption></figure>
+        <figure class="cam" data-view="usb"><div class="frame"><img src="http://127.0.0.1:8767/stream/usb" alt="Side camera, live"></div><figcaption>Side camera <span class="frozen"></span></figcaption></figure>
+      </div>
+    </section>
+    <section class="readout" aria-label="Servo pulses">
+      <dl class="pulses">
+        <div><dt>base</dt><dd data-joint="base">—</dd></div><div><dt>shoulder</dt><dd data-joint="shoulder">—</dd></div><div><dt>elbow</dt><dd data-joint="elbow">—</dd></div>
+        <div><dt>wrist pitch</dt><dd data-joint="wrist_pitch">—</dd></div><div><dt>wrist roll</dt><dd data-joint="wrist_roll">—</dd></div><div><dt>gripper</dt><dd data-joint="gripper">—</dd></div>
+      </dl>
+      <p class="note">Servo pulses in µs. <span id="age"></span></p>
+      <div class="replay" id="replay-bar" hidden>
+        <select id="session" aria-label="Session"></select>
+        <button type="button" id="play">Play</button>
+        <input type="range" id="scrub" min="0" max="0" step="0.1" value="0" aria-label="Replay position">
+        <div class="switch" role="group" aria-label="Speed"><button type="button" data-speed="1" aria-pressed="true">×1</button><button type="button" data-speed="4" aria-pressed="false">×4</button></div>
+        <time id="clock"></time>
+      </div>
+    </section>
+    <section class="log">
+      <div>
+        <h2>Tries</h2>
+        <table id="tries" hidden><thead><tr><th>Try</th><th>Offset</th><th>Depth</th><th>Grip</th><th>Elbow</th><th>Result</th></tr></thead><tbody></tbody></table>
+        <p id="no-tries">No tries yet.</p>
+        <p class="note">Offset and depth in side-camera pixels; grip opening and lowest elbow pulse in µs.</p>
+      </div>
+      <div>
+        <h2>Muse verdicts</h2>
+        <p id="muse" hidden></p>
+        <ol id="verdicts"></ol>
+        <p id="no-verdicts">None yet.</p>
+      </div>
+    </section>
+    <section class="log">
+      <div>
+        <h2>What it learned</h2>
+        <p id="learned-summary">Nothing learned yet.</p>
+        <div class="scroll"><table id="learned" hidden><thead><tr><th>Chance</th><th>Lifted</th><th>Offset</th><th>Depth</th><th>Steps</th><th>Grip</th><th>Elbow</th></tr></thead><tbody></tbody></table></div>
+        <p class="note">Offset and depth in side-camera pixels; steps is the maximum number of descent moves; grip opening and lowest elbow pulse in µs.</p>
+      </div>
+      <div>
+        <h2>Last attempts</h2>
+        <p id="attempts-summary">The ten most recent grasp tries across all runs, newest first.</p>
+        <ol id="attempts"></ol>
+        <p id="no-attempts">No grasp tries yet. Start a run from the terminal.</p>
+      </div>
+    </section>
+  </main>
+  <script src="/static/arm3d.js"></script>
+  <script>
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const set = (element, value) => { if (element.textContent !== value) element.textContent = value; };
+    const words = value => String(value).replaceAll("_", " ");
+    const capital = value => value.charAt(0).toUpperCase() + value.slice(1);
+    const signed = n => n < 0 ? `−${-n}` : `${n}`;
+    const clock = t => new Date(t * 1000).toLocaleTimeString("en-GB");
+    const minute = t => new Date(t * 1000).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+    const ago = s => s < 90 ? `${Math.round(s)} s` : s < 5400 ? `${Math.round(s / 60)} min` : s < 172800 ? `${Math.round(s / 3600)} h` : `${Math.round(s / 86400)} days`;
+    const json = async url => {
+      const res = await fetch(url, {cache: "no-store"});
+      if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+      return res.json();
+    };
+    const press = (selector, active) => document.querySelectorAll(selector).forEach(button => button.setAttribute("aria-pressed", button === active));
+    const JOINTS = ["base", "shoulder", "elbow", "wrist_pitch", "wrist_roll", "gripper"];
+    const CLASSES = {lifted: "Lifted the sponge", reach_failed: "Could not line up over the sponge", too_shallow: "Jaws closed above the sponge",
+                     closed_on_air: "Jaws closed beside the sponge", object_lost: "Lost sight of the sponge", not_lifted: "The sponge stayed on the table",
+                     pushed: "Pushed the sponge away", jaws_on_top: "Jaws landed on top of the sponge", slipped: "The sponge slipped out while lifting"};
+    const DESCENTS = {reached: "Reached the planned depth", cap: "Used every descent step", stalled: "The descent was blocked",
+                      pushed: "The sponge moved during the descent", lost: "Lost sight during the descent"};
+    const REACHES = {no_progress: "The approach stopped making progress", diverging: "The approach drifted away", stalled: "The arm stalled on the way",
+                     move_limit: "Ran out of approach moves", usb_tip_lost: "The side camera lost the gripper"};
+    const said = (names, value) => names[value] ?? capital(words(value));
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const view = new ArmView($("arm"));
+    let mode = location.hash === "#replay" ? "replay" : "live", trail = [], lastT = null, shown = "", learned = "";
+    let sessions = [], keyframes = [], runs = [], T = 0, start = 0, end = 0, speed = 1, tick = null, before = 0, armAge = null, latestTry = null;
+
+    const graspStep = run => run?.steps?.find(step => step.phase === "grasp");
+    const started = run => Date.parse(run.started_at) / 1000;
+
+    function phase(run) {
+      const step = graspStep(run);
+      if (!run) return [mode === "live" && (armAge == null || armAge >= 15) ? "Waiting" : "Moving", ""];
+      if (step?.help) return ["Asking for help", "stop"];
+      if (run.phase === "done") return run.ok ? ["Placed", "ok"] : ["Stopped", "stop"];
+      if (run.phase === "grasp" && (step?.ok || step?.tries?.at(-1)?.lifted)) return ["Lifted", "ok"];
+      return [{planning: "Planning", grasp: "Grasping", place: "Placing"}[run.phase] ?? capital(words(run.phase)), ""];
+    }
+
+    function detail(run) {
+      if (!run) return mode === "live" ? (latestTry ? `Last grasp try, ${clock(latestTry.t)}: ${said(CLASSES, latestTry.class)}.` : "No run yet.") : runs.length ? "The run has not started yet." : "No run started during this session.";
+      const step = graspStep(run), last = step?.tries?.at(-1);
+      if (step?.help) return step.help;
+      if (run.phase === "done") return run.ok ? `Finished in ${run.seconds} s.` : `Ended after ${run.seconds} s: ${words(run.reason)}.`;
+      if (run.phase === "grasp" && last) return `Grasp try ${step.tries.length}, offset ${signed(last.params.offset_usb_x)} px`;
+      return `${run.seconds ?? 0} s into the run.`;
+    }
+
+    // A replayed run as it stood at time t: tries carry their own time; Muse verdicts appear when the run ends.
+    function runAt(run, t) {
+      if (!run || t < started(run)) return null;
+      if (t >= started(run) + run.seconds) return run;
+      const step = graspStep(run) ?? {}, tries = (step.tries ?? []).filter(record => record.t <= t);
+      const placing = step.ok && tries.length === step.tries.length;
+      return {...run, phase: placing ? "place" : "grasp", seconds: Math.round(t - started(run)), verdicts: [],
+              steps: placing ? [step] : [{...step, ok: false, help: undefined, tries}]};
+    }
+
+    function showTries(tries) {
+      $("tries").tBodies[0].replaceChildren(...tries.map((record, i) => {
+        const row = document.createElement("tr"), {params} = record;
+        row.append(...[i + 1, `${signed(params.offset_usb_x)} px`, `${params.depth_px} px`, params.grip_open_us, params.elbow_min_us, said(CLASSES, record.class)]
+          .map(value => Object.assign(document.createElement("td"), {textContent: value})));
+        if (record.lifted) row.lastChild.className = "ok";
+        if (record.muse_offset != null) row.lastChild.append(Object.assign(document.createElement("small"), {textContent: `Muse suggested ${signed(record.muse_offset)} px`}));
+        return row;
+      }));
+      $("tries").hidden = !tries.length; $("no-tries").hidden = tries.length > 0;
+    }
+
+    function showVerdicts(run) {
+      $("muse").hidden = !run;
+      if (run) set($("muse"), run.muse === "unavailable" ? "Muse unavailable, local checks only." : run.meta ? `${run.meta.calls} calls, USD ${run.meta.usd}` : "Muse available.");
+      const items = (run?.verdicts ?? []).map(verdict => {
+        const item = document.createElement("li");
+        const outcome = verdict.success === null ? "gave no verdict" : verdict.success ? "succeeded" : "failed";
+        item.append(Object.assign(document.createElement("strong"), {textContent: capital(words(verdict.phase))}),
+                    ` ${outcome}${verdict.next ? `, suggests ${words(verdict.next)}` : ""}.`,
+                    Object.assign(document.createElement("span"), {className: "verdict-reason", textContent: `${verdict.reason.startsWith("Muse failed") ? "Muse unavailable" : verdict.reason} (${verdict.source === "muse" ? "Muse" : "local check"})`}));
+        return item;
+      });
+      $("verdicts").replaceChildren(...items); $("no-verdicts").hidden = items.length > 0;
+    }
+
+    function showRun(run) {
+      const [word, tone] = phase(run);
+      set($("phase"), word); $("phase").dataset.tone = tone;
+      set($("detail"), detail(run));
+      set($("instruction"), run?.instruction ? `“${run.instruction}”` : "");
+      const key = JSON.stringify([run?.run_id, run?.phase, graspStep(run)?.tries?.length, run?.verdicts?.length, run?.meta]);
+      if (key === shown) return;
+      shown = key; showTries(graspStep(run)?.tries ?? []); showVerdicts(run);
+    }
+
+    function showLearned(arms) {
+      const tries = arms.reduce((sum, arm) => sum + arm.attempts, 0);
+      set($("learned-summary"), `The chance each grasp setting lifts the sponge, best first${tries ? `, from ${tries} ${tries === 1 ? "try" : "tries"} across all runs.` : ". No classified tries yet, so every chance is a starting guess."}`);
+      $("learned").tBodies[0].replaceChildren(...arms.map(arm => {
+        const row = document.createElement("tr"), {params} = arm, percent = `${Math.round(arm.rate * 100)}%`;
+        const chance = Object.assign(document.createElement("td"), {className: arm.attempts ? "chance" : "chance prior", textContent: arm.attempts ? percent : `${percent} prior`});
+        const bar = chance.appendChild(Object.assign(document.createElement("span"), {className: "bar"}));
+        bar.style.setProperty("--rate", arm.rate);
+        row.append(chance, ...[arm.attempts ? `${arm.successes} of ${arm.attempts}` : "—", `${signed(params.offset_usb_x)} px`, `${params.depth_px} px`, params.max_steps, params.grip_open_us, params.elbow_min_us]
+          .map(value => Object.assign(document.createElement("td"), {textContent: value})));
+        return row;
+      }));
+      $("learned").hidden = false;
+    }
+
+    function showAttempts(attempts) {
+      $("attempts").replaceChildren(...attempts.map(attempt => {
+        const item = document.createElement("li"), {params} = attempt;
+        const how = attempt.class === "reach_failed" ? said(REACHES, attempt.reach) : attempt.descent_stop ? said(DESCENTS, attempt.descent_stop) : "";
+        const took = attempt.seconds == null ? "" : `${Math.round(attempt.seconds)} s`;
+        item.append(Object.assign(document.createElement("strong"), {className: attempt.class === "lifted" ? "ok" : "", textContent: said(CLASSES, attempt.class)}),
+                    Object.assign(document.createElement("time"), {dateTime: new Date(attempt.t * 1000).toISOString(), textContent: clock(attempt.t)}),
+                    Object.assign(document.createElement("p"), {textContent: `${[how, took].filter(Boolean).join(", ")}${how || took ? ". " : ""}Offset ${signed(params.offset_usb_x)} px, depth ${params.depth_px} px, up to ${params.max_steps} steps, grip ${params.grip_open_us} µs, elbow ${params.elbow_min_us} µs.`}));
+        if (attempt.photos.length) item.append(Object.assign(document.createElement("div"), {className: "shots"}));
+        item.querySelector(".shots")?.append(...attempt.photos.map(name => {
+          const link = Object.assign(document.createElement("a"), {href: `/api/arm/photos/${encodeURIComponent(name)}`, target: "_blank"});
+          const moment = name.includes("-descent-") ? "After the descent" : "After the lift";
+          link.append(Object.assign(document.createElement("img"), {src: link.href, alt: `${moment}, front and side cameras`, loading: "lazy"}), moment);
+          return link;
+        }));
+        return item;
+      }));
+      $("no-attempts").hidden = attempts.length > 0; $("attempts-summary").hidden = !attempts.length;
+    }
+
+    const pulseCells = JOINTS.map(joint => document.querySelector(`[data-joint="${joint}"]`));
+    const showPulses = pulses => pulseCells.forEach((cell, i) => set(cell, String(Math.round(pulses[JOINTS[i]]))));
+
+    async function pollArm() {
+      if (mode === "live") {
+        try {
+          const live = await json("/api/arm/live");
+          if (mode === "live" && live.pulses && live.t !== lastT) {
+            lastT = live.t; trail = [...trail, live.chain[3]].slice(-40);
+            view.setPose(live.chain); view.setTrail(trail); showPulses(live.pulses);
+          }
+          armAge = live.pulses ? live.age_s : null;
+          if (mode === "live") set($("age"), live.pulses ? `Last command ${ago(live.age_s)} ago.` : "No command has reached the arm yet.");
+        } catch {}
+      }
+      setTimeout(pollArm, 500);
+    }
+
+    async function pollRun() {
+      if (mode === "live") {
+        try {
+          const {run} = await json("/api/autonomy/latest");
+          if (mode === "live") showRun(run);
+        } catch {}
+      }
+      setTimeout(pollRun, 1000);
+    }
+
+    async function pollLearned() {
+      try {
+        const [{arms}, {attempts}] = await Promise.all([json("/api/arm/learning"), json("/api/arm/attempts")]), key = JSON.stringify([arms, attempts]);
+        latestTry = attempts[0] ?? null;
+        if (key !== learned) { learned = key; showLearned(arms); showAttempts(attempts); }
+      } catch {}
+      setTimeout(pollLearned, 5000);
+    }
+
+    function seek(t) {
+      T = t;
+      let k = keyframes.findIndex(frame => frame.t >= T);
+      if (k < 0) k = keyframes.length - 1;
+      const to = keyframes[k], from = keyframes[k - 1] ?? to;
+      const f = reduced.matches ? Number(T >= to.t) : Math.min(1, Math.max(0, 1 - (to.t - T) / to.duration));
+      const mix = (a, b) => a + (b - a) * f;
+      const chain = from.chain.map((point, i) => point.map((v, j) => mix(v, to.chain[i][j])));
+      view.setPose(chain);
+      view.setTrail([...keyframes.slice(Math.max(0, k - 39), k).map(frame => frame.chain[3]), chain[3]]);
+      showPulses(Object.fromEntries(JOINTS.map(joint => [joint, mix(from.pulses[joint], to.pulses[joint])])));
+      $("scrub").value = T - start; set($("clock"), clock(T));
+      showRun(runAt(runs.filter(run => started(run) <= T).at(-1), T));
+    }
+
+    function advance(now) {
+      seek(Math.min(end, T + Math.max(0, now - before) / 1000 * speed)); before = now;
+      if (T >= end) pause(); else tick = requestAnimationFrame(advance);
+    }
+
+    function play() {
+      if (T >= end) T = start;
+      before = performance.now(); tick = requestAnimationFrame(advance); set($("play"), "Pause");
+    }
+
+    function pause() { cancelAnimationFrame(tick); tick = null; set($("play"), "Play"); }
+
+    async function load(index) {
+      pause();
+      let replay, loaded;
+      try {
+        [replay, ...loaded] = await Promise.all([json(`/api/arm/replay/${index}`), ...sessions[index].runs.map(id => json(`/api/autonomy/runs/${id}`))]);
+      } catch {
+        if (mode === "replay") set($("detail"), "Could not load this session.");
+        return;
+      }
+      if (mode !== "replay") return;
+      keyframes = replay.keyframes; runs = loaded;
+      start = keyframes[0].t - keyframes[0].duration; end = keyframes.at(-1).t;
+      $("scrub").max = (end - start).toFixed(1);
+      seek(start);
+      if (!reduced.matches) play();
+    }
+
+    async function enterReplay() {
+      try {
+        sessions = await json("/api/arm/sessions");
+      } catch {
+        if (mode === "replay") { set($("detail"), "Could not load the recorded sessions. Switch to Live and back to retry."); $("replay-bar").hidden = true; }
+        return;
+      }
+      if (mode !== "replay") return;
+      $("session").replaceChildren(...sessions.map(s => new Option(
+        `${new Date(s.start * 1000).toLocaleDateString("en-GB", {day: "numeric", month: "short"})}, ${minute(s.start)} to ${minute(s.end)}, ${s.moves} ${s.moves === 1 ? "move" : "moves"}${s.runs.length ? `, ${s.runs.length} ${s.runs.length === 1 ? "run" : "runs"}` : ""}`, s.index)));
+      if (!sessions.length) { set($("phase"), "Waiting"); set($("detail"), "No moves recorded yet."); $("replay-bar").hidden = true; return; }
+      $("session").value = sessions.at(-1).index;
+      load(sessions.at(-1).index);
+    }
+
+    function setMode(next) {
+      mode = next; pause(); trail = []; lastT = null; shown = "";
+      press("[data-mode]", document.querySelector(`[data-mode="${mode}"]`));
+      $("replay-bar").hidden = mode !== "replay"; $("age").hidden = mode !== "live";
+      document.querySelector(".stage").dataset.mode = mode;
+      history.replaceState(null, "", mode === "replay" ? "#replay" : location.pathname);
+      if (mode === "replay") enterReplay();
+    }
+
+    const cams = $("cams"), figures = [...cams.querySelectorAll(".cam")];
+    let chosen = "c922";
+    function showCams() {
+      const on = figures.filter(figure => !("off" in figure.dataset));
+      $("no-cams").hidden = on.length > 0;
+      cams.querySelector(".cam-switch").hidden = on.length < 2;
+      cams.dataset.show = on.length === 1 ? on[0].dataset.view : chosen;
+    }
+    for (const figure of figures) {
+      const img = figure.querySelector("img"), url = img.src;
+      let retry = null;
+      const off = () => { figure.dataset.off = ""; showCams(); retry ??= setTimeout(() => { retry = null; img.src = url; }, 5000); };
+      img.addEventListener("error", off);
+      img.addEventListener("load", () => { delete figure.dataset.off; showCams(); });
+      if (img.complete && !img.naturalWidth) off();
+    }
+
+    async function pollFrozen() {
+      let status = {};
+      try { status = await (await fetch("http://127.0.0.1:8767/status")).json(); } catch {}
+      for (const figure of figures) {
+        const feed = status[figure.dataset.view], note = figure.querySelector(".frozen");
+        set(note, mode === "live" && feed?.age > 4 ? `Frozen since ${new Date(Date.now() - feed.age * 1000).toLocaleTimeString([], { hour12: false })}` : "");
+      }
+    }
+
+    document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => { if (button.dataset.mode !== mode) setMode(button.dataset.mode); }));
+    document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => { chosen = button.dataset.view; press("[data-view]", button); showCams(); }));
+    document.querySelectorAll("[data-speed]").forEach(button => button.addEventListener("click", () => { speed = Number(button.dataset.speed); press("[data-speed]", button); }));
+    $("play").addEventListener("click", () => tick ? pause() : play());
+    $("scrub").addEventListener("input", () => seek(start + Number($("scrub").value)));
+    $("session").addEventListener("change", () => load(Number($("session").value)));
+
+    json("/api/arm/model").then(model => {
+      view.setScene(model);
+      set($("model-name"), model.nominal ? "Schematic arm, not yet fitted to the cameras." : model.fit?.approximate ? "Fitted arm, approximate geometry." : "Fitted arm.");
+      set($("model-note"), `${model.atlas.length ? `Blue dots: the ${model.atlas.length} poses it has scanned. ` : ""}Grey dots: the reach its pulse limits allow. Drag to turn it; Ctrl + scroll zooms.`);
+    }).catch(() => { set($("model-name"), "Arm model unavailable."); set($("model-note"), "Reload the page to retry."); });
+    setMode(mode); showCams(); pollArm(); pollRun(); pollLearned();
+    setInterval(pollFrozen, 2000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+.calibration-page { max-width:1560px; }
+.calibration-intro { margin:24px 0 30px; }
+.calibration-intro h1 { margin-top:15px; font-size:clamp(30px,3.5vw,52px); letter-spacing:-1.8px; }
+.calibration-intro>p:last-child { margin-top:16px; max-width:700px; font-size:17px; color:var(--muted); }
+.calibration-grid { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(340px,1fr); gap:22px; }
+.setup-card { min-width:0; border:1px solid var(--line); padding:22px; }
+.setup-card-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+.setup-card h2,.setup-next h2 { font:500 18px/1.5 var(--display); letter-spacing:-.5px; margin:0; }
+.setup-badge { font:12px var(--mono); color:var(--muted); }
+.calibration-camera { position:relative; display:grid; place-items:center; aspect-ratio:16/9; background:#e6e6e0; border:1px solid var(--line); }
+.camera-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.scene-overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.scene-overlay[hidden],.calibration-camera img[hidden],.detection-toggle[hidden] { display:none; }
+.detection-toggle { margin-top:14px; }
+.calibration-camera.marking { cursor:crosshair; touch-action:none; user-select:none; }
+.workspace-setup { border-top:1px solid var(--line); margin-top:18px; }
+.workspace-setup>summary { cursor:pointer; padding:16px 0; font-size:16px; }
+.workspace-setup>.checkbox-label { margin:18px 0; }
+.workspace-setup .button[aria-pressed="true"] { background:var(--text); color:var(--bg); }
+.scene-summary { font-size:18px; line-height:1.6; }
+.scene-stamp { font:12px/1.8 var(--mono); color:var(--muted); margin:12px 0; }
+.scene-objects { display:flex; flex-wrap:wrap; gap:8px; }
+.scene-objects span { border:1px solid var(--line); padding:7px 10px; font-size:14px; }
+#scene-result summary,.model-details summary { cursor:pointer; padding:12px 0; font-size:15px; }
+#scene-evidence li { font-size:14px; line-height:1.6; margin:8px 0; color:var(--muted); }
+#scene-photo { text-decoration:underline; font-size:14px; }
+.calibration-camera img { width:100%; height:100%; display:block; object-fit:contain; }
+.calibration-camera p { padding:24px; color:var(--muted); text-align:center; }
+.camera-facts { margin-top:14px; font:13px/1.7 var(--mono); color:var(--muted); }
+.camera-guidance { font-size:15px; line-height:1.6; margin-top:8px; }
+.controller-summary { margin-bottom:18px; font-size:17px; }
+.joint-table { font-size:15px; }
+.joint-table th,.joint-table td { padding:10px 0; }
+.joint-table td:last-child { text-align:right; color:var(--text); }
+.joint-table th:last-child { text-align:right; }
+.setup-help { color:var(--muted); font-size:15px; line-height:1.65; margin:15px 0; }
+#pose-form .field { margin-top:20px; }
+#pose-name { width:100%; min-height:46px; border:1px solid var(--line); border-radius:0; background:var(--bg); padding:10px 12px; font-size:16px; }
+#pose-form .button { margin-top:18px; }
+.saved-poses { margin-top:22px; border-top:1px solid var(--line); }
+.saved-poses li { padding:12px 0; border-bottom:1px solid var(--line); font-size:15px; }
+.meta-roles div { display:flex; justify-content:space-between; gap:18px; padding:13px 0; border-bottom:1px solid var(--line); }
+.meta-roles dt,.meta-roles dd { margin:0; font-size:15px; }
+.meta-roles dd { color:var(--muted); }
+.meta-setup>summary { display:flex; justify-content:space-between; padding:15px 0; font-size:15px; border-top:1px solid var(--line); }
+.meta-setup p,.meta-setup a { font-size:14px; line-height:1.7; }
+.meta-setup code { display:block; overflow-wrap:anywhere; font:13px/1.7 var(--mono); padding:15px 0; }
+.meta-setup a { text-decoration:underline; text-underline-offset:3px; }
+.vision-result { border-top:1px solid var(--line); margin-top:18px; padding-top:18px; }
+.vision-summary { font-size:16px; line-height:1.6; }
+.vision-result summary { font-size:15px; padding:10px 0; cursor:pointer; }
+#vision-frames a { display:block; padding:8px 0; font-size:14px; text-decoration:underline; }
+#vision-limits li { margin:9px 0; font-size:14px; line-height:1.6; color:var(--muted); }
+.setup-next { border-top:1px solid var(--line); margin-top:30px; padding-top:22px; }
+.setup-next p { max-width:800px; font-size:16px; color:var(--muted); line-height:1.7; margin-top:12px; }
+.reference-poses { margin-top:24px; border:1px solid var(--line); padding:0 22px; }
+.reference-poses>summary { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; padding:20px 0; font-size:16px; }
+.reference-poses>summary span { font:13px var(--mono); color:var(--muted); }
+.reference-poses>p { max-width:800px; font-size:15px; color:var(--muted); line-height:1.7; }
+.reference-table { overflow-x:auto; margin:18px 0; }
+.reference-table table { min-width:720px; }
+.teach-link { margin-left:20px; text-decoration:underline; text-underline-offset:4px; font:14px 'Segoe UI',sans-serif; }
+@media(max-width:950px) { .calibration-grid { grid-template-columns:1fr; } .calibration-page .topnav { gap:18px; } }
+@media(max-width:600px) { .setup-card { padding:18px; } .calibration-page .calibration-intro>p:last-child { font-size:16px; } .global-actions>.setup-badge { display:none; } .setup-card h2,.setup-next h2 { font-size:16px; } .setup-card-heading .button { font-size:14px; } .meta-roles div { flex-wrap:wrap; gap:4px 18px; } }

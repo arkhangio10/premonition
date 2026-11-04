@@ -1,0 +1,36 @@
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.playwright-mcp/
+
+# Secretos: la clave de Meta vive solo en el entorno o en .env local.
+.env
+
+# Datos del banco que usa /autonomy; el resto de runs/ queda local.
+runs/*
+!runs/real/
+runs/real/*
+!runs/real/autonomy/
+runs/real/autonomy/*
+!runs/real/autonomy/commands.jsonl
+!runs/real/autonomy/*.json
+!runs/real/calibration/
+runs/real/calibration/*
+!runs/real/calibration/skill_memory.json
+!runs/real/calibration/capabilities.json
+!runs/real/calibration/arm_model.json
+!runs/real/calibration/arm_model_fit_report.json
+
+# Herramientas del banco y solo las fotos revisadas (sin personas en cuadro).
+inspection/*
+!inspection/*.py
+!inspection/session_tools_20261103/
+!inspection/grasp-004030-*.jpg
+!inspection/grasp-005300-*.jpg
+!inspection/grasp-010514-*.jpg
+!inspection/grasp-012044-*.jpg
+!inspection/grasp-012624-*.jpg
+!inspection/grasp-012956-try[1235]-*.jpg
+!inspection/autonomy-grasp-20261103.jpg
+!inspection/autonomy-place-20261103.jpg

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f2ee"><title>Premonition · Teach arm</title><link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/app.css?v=20261101-teach"><link rel="stylesheet" href="/static/calibration.css?v=4">
+  <script src="/static/calibration.js?v=12" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#calibration-workspace">Skip to calibration</a>
+  <header class="topbar"><div class="topbar-inner">
+    <a class="brand" href="/" aria-label="Premonition home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong>premonition<span>LAB / 01</span></strong></a>
+    <nav class="topnav" aria-label="Main navigation"><a href="/">Workspace</a><a class="active" aria-current="page" href="/calibration">Teach arm</a><a href="/autonomy">Autonomy</a></nav>
+    <div class="global-actions"><span class="setup-badge">Pose recording only</span><button class="button button-primary" id="inspect-arm" type="button"><span>Check arm</span></button></div>
+  </div></header>
+  <main class="page calibration-page" id="calibration-workspace">
+    <div class="calibration-intro"><p class="eyebrow">REAL HARDWARE / SETUP</p><h1>Teach the arm<span>.</span></h1><p>Check the controller and camera, then record positions you have verified.</p></div>
+    <p class="notice" id="calibration-notice" role="status"></p>
+    <div class="calibration-grid">
+      <section class="setup-card camera-card" aria-labelledby="camera-title">
+        <div class="setup-card-heading"><h2 id="camera-title">Jetson camera</h2><div class="camera-actions"><button id="live-preview" class="button" type="button">Go live</button><button id="refresh-photo" class="button" type="button">Refresh photo</button><button id="analyze-scene" class="button button-primary" type="button" disabled>Analyze scene</button></div></div>
+        <div class="calibration-camera" id="camera-canvas"><p id="camera-placeholder">Take a photo or open the live view.</p><img id="camera-image" alt="Camera snapshot of the real arm and work area" draggable="false" hidden><img id="live-image" alt="Live Jetson camera preview" draggable="false" hidden><svg id="scene-overlay" class="scene-overlay" aria-hidden="true" hidden></svg><svg id="regions-overlay" class="scene-overlay" aria-hidden="true" hidden></svg></div>
+        <label class="checkbox-label detection-toggle" id="detection-toggle" hidden><input id="show-detections" type="checkbox" checked><span>Show SAM detections</span></label>
+        <div class="camera-facts" id="camera-facts">Snapshot · not live video</div><p class="camera-guidance" id="camera-guidance">Keep the arm and work area visible, with even lighting.</p>
+        <details class="workspace-setup" id="workspace-setup"><summary>Set pick-up and destination</summary>
+          <p class="setup-help" id="workspace-hint">Mark two areas on this photo. Arm positions are taught separately.</p>
+          <div class="camera-actions"><button class="button" id="use-sponge" type="button" disabled>Use detected sponge</button><button class="button" id="mark-source" type="button" aria-pressed="false" disabled>Mark pick-up</button><button class="button" id="mark-destination" type="button" aria-pressed="false" disabled>Mark destination</button></div>
+          <label class="checkbox-label"><input type="checkbox" id="workspace-observed"><span>I checked both marked areas on the table.</span></label>
+          <button class="button button-primary" id="save-workspace" type="button" disabled>Save areas</button>
+          <p class="setup-help" id="workspace-summary">No areas saved.</p>
+        </details>
+      </section>
+      <section class="setup-card controller-card" aria-labelledby="controller-title">
+        <div class="setup-card-heading"><h2 id="controller-title">Arm controller</h2><span class="setup-badge" id="connection-state">Not checked</span></div>
+        <p class="controller-summary" id="controller-summary">Check the arm to read its outputs.</p>
+        <table class="joint-table"><thead><tr><th scope="col">Joint</th><th scope="col">Commanded pulse</th></tr></thead><tbody id="joint-readings"></tbody></table>
+        <p class="setup-help">These are commanded pulses, not measured joint angles.</p>
+      </section>
+      <section class="setup-card" aria-labelledby="pose-title">
+        <div class="setup-card-heading"><h2 id="pose-title">Record a pose</h2><span class="setup-badge" id="pose-ready">Check required</span></div>
+        <p class="setup-help" id="pose-guidance">Outputs must be active and stable before a pose can be recorded.</p>
+        <form id="pose-form"><div class="field"><label for="pose-name">Pose name</label><input id="pose-name" name="name" maxlength="60" placeholder="e.g. Observation pose" required></div>
+          <label class="checkbox-label"><input id="pose-observed" type="checkbox" required><span>I checked this pose on the real arm.</span></label>
+          <button class="button button-primary" id="save-pose" type="submit" disabled><span>Record pose</span></button>
+        </form>
+        <ul class="saved-poses" id="saved-poses"><li>No poses recorded yet.</li></ul>
+      </section>
+      <section class="setup-card meta-card" aria-labelledby="meta-title">
+        <div class="setup-card-heading"><h2 id="meta-title">Scene understanding</h2><span class="setup-badge" id="meta-state">Key needed</span></div>
+        <p id="scene-empty" class="setup-help">Use Analyze scene to inspect a new photo with Muse Spark and locate the gripper and sponge with SAM.</p>
+        <div id="scene-result" hidden>
+          <p class="scene-summary" id="scene-summary"></p><p class="scene-stamp" id="scene-stamp"></p>
+          <div class="scene-objects" id="scene-objects"></div>
+          <p class="setup-help" id="scene-next"></p>
+          <details><summary>Evidence and limits</summary><ul id="scene-evidence"></ul><p class="setup-help" id="scene-cost"></p><a id="scene-photo" target="_blank" rel="noreferrer">Open analyzed photo ↗</a></details>
+        </div>
+        <button class="button" id="select-gripper" type="button" disabled>Select gripper</button>
+        <details class="model-details"><summary>Models</summary><dl class="meta-roles"><div><dt>Scene understanding</dt><dd>Muse Spark</dd></div><div><dt>Object segmentation</dt><dd>SAM 3.1</dd></div><div><dt>Expected image in demo</dt><dd>Muse Image</dd></div></dl></details>
+        <p class="setup-help" id="meta-guidance">A Meta API key is needed for model calls. Joint calibration works locally.</p>
+        <details class="vision-result" id="vision-result" hidden><summary>Earlier movement check</summary>
+          <p class="vision-summary" id="vision-summary"></p>
+          <p class="setup-help" id="vision-next"></p>
+          <details><summary>Recorded camera evidence</summary><div id="vision-frames"></div><ul id="vision-limits"></ul></details>
+        </details>
+        <details class="meta-setup"><summary>Set up the API key <span aria-hidden="true">+</span></summary><p>Run the local setup command in PowerShell, then restart the app:</p><code id="meta-setup-command">Loading local setup command…</code><a href="https://dev.meta.ai/docs/overview" target="_blank" rel="noreferrer">Meta Model API documentation ↗</a></details>
+      </section>
+    </div>
+    <details class="reference-poses"><summary>Previously taught poses <span>Historical reference · recheck before use</span></summary><p>Imported from MindArm for the earlier sponge setup. Partial targets keep the preceding joint values; no motion is enabled by this import.</p><div class="reference-table"><table><thead><tr><th>Pose</th><th>Base</th><th>Shoulder</th><th>Elbow</th><th>Wrist pitch</th><th>Wrist roll</th><th>Gripper</th></tr></thead><tbody id="reference-poses"></tbody></table></div></details>
+    <section class="setup-next"><h2>Next step</h2><p id="first-move-guidance">Check the arm, mark the work areas and record the observation pose.</p></section>
+    <footer><a href="/">← Back to the demo</a><span>Real hardware · Local records</span></footer>
+  </main>
+</body>
+</html>

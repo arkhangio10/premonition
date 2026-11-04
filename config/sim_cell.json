@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "cell_id": "sim-kit-tray",
+  "synthetic": true,
+  "note": "Celda sintética para simulación y replay. Sus regiones y umbrales describen imágenes generadas por código, no la mesa real.",
+  "stop_procedure_confirmed": false,
+  "joints": ["base", "shoulder", "elbow", "wrist_pitch", "wrist_roll", "gripper"],
+  "envelope_us": {
+    "base": [1000, 2000],
+    "shoulder": [1000, 2000],
+    "elbow": [1000, 2000],
+    "wrist_pitch": [1180, 1980],
+    "wrist_roll": [1000, 2000],
+    "gripper": [1130, 1950]
+  },
+  "max_speed_us_s": 1000.0,
+  "pieces": [
+    {"id": "A", "label": "pieza A", "source_id": "src_a", "sam_phrase": null,
+     "appearance": {"hue": 0.0, "hue_tol": 12.0, "sat_min": 80, "val_min": 60}},
+    {"id": "B", "label": "pieza B", "source_id": "src_b", "sam_phrase": null,
+     "appearance": {"hue": 60.0, "hue_tol": 12.0, "sat_min": 80, "val_min": 60}},
+    {"id": "C", "label": "pieza C", "source_id": "src_c", "sam_phrase": null,
+     "appearance": {"hue": 120.0, "hue_tol": 12.0, "sat_min": 80, "val_min": 60}}
+  ],
+  "locations": [
+    {"id": "src_a", "kind": "source", "label": "origen A", "region": {"x": 120, "y": 60, "w": 160, "h": 160}},
+    {"id": "src_b", "kind": "source", "label": "origen B", "region": {"x": 400, "y": 60, "w": 160, "h": 160}},
+    {"id": "src_c", "kind": "source", "label": "origen C", "region": {"x": 680, "y": 60, "w": 160, "h": 160}},
+    {"id": "left", "kind": "destination", "label": "izquierda", "region": {"x": 120, "y": 320, "w": 160, "h": 160}},
+    {"id": "center", "kind": "destination", "label": "centro", "region": {"x": 400, "y": 320, "w": 160, "h": 160}},
+    {"id": "right", "kind": "destination", "label": "derecha", "region": {"x": 680, "y": 320, "w": 160, "h": 160}}
+  ],
+  "observe_pose": null,
+  "routes": {},
+  "perception": {
+    "background_bgr": [214, 219, 222],
+    "foreground_delta": 45.0,
+    "occupied_min": 0.12,
+    "empty_max": 0.04,
+    "occluder_val_max": 70,
+    "occlusion_max": 0.08,
+    "identity_min": 0.6,
+    "identity_margin": 0.3,
+    "position_tol_norm": 0.25,
+    "brightness_min": 40.0,
+    "brightness_max": 235.0,
+    "saturated_max": 0.25,
+    "sharpness_min": 20.0,
+    "reference_similarity_min": 0.2
+  },
+  "limits": {"max_plan_steps": 32, "max_attempts": 2, "max_reobserve": 1, "settle_s": 0.0}
+}

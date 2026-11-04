@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "cell_id": "mesa-real",
+  "synthetic": false,
+  "note": "Celda física en calibración. Parada física identificada por el operador: desenchufar la fuente externa de servos. Base fijada a la mesa según el operador. OBSERVE_C922 es la pose de observación anterior en HOME; APPROACH_SHOULDER_01 se guardó estable el 2 de noviembre de 2026. Piezas, regiones, percepción y rutas aún pendientes. La envolvente histórica no equivale a límites mecánicos calibrados.",
+  "stop_procedure_confirmed": true,
+  "joints": [
+    "base",
+    "shoulder",
+    "elbow",
+    "wrist_pitch",
+    "wrist_roll",
+    "gripper"
+  ],
+  "envelope_us": {
+    "base": [
+      1000,
+      2000
+    ],
+    "shoulder": [
+      1000,
+      2000
+    ],
+    "elbow": [
+      1000,
+      2000
+    ],
+    "wrist_pitch": [
+      1180,
+      1980
+    ],
+    "wrist_roll": [
+      1000,
+      2000
+    ],
+    "gripper": [
+      1130,
+      1950
+    ]
+  },
+  "max_speed_us_s": 1000.0,
+  "pieces": [],
+  "locations": [],
+  "observe_pose": {
+    "name": "OBSERVE_C922",
+    "targets_us": {
+      "base": 1499,
+      "shoulder": 1450,
+      "elbow": 1499,
+      "wrist_pitch": 1602,
+      "wrist_roll": 1499,
+      "gripper": 1499
+    },
+    "duration_s": 2.0
+  },
+  "routes": {},
+  "perception": null,
+  "limits": {
+    "max_plan_steps": 32,
+    "max_attempts": 2,
+    "max_reobserve": 1,
+    "settle_s": 1.0
+  }
+}

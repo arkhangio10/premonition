@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "source_file": "nvdia_hackathon/mindarm/config/jetson_arm.yaml",
+  "source_sha256": "db712e979f289887cc2ef64f3a6b627026dd60dd560e8848307425297c14f053",
+  "units": "microseconds",
+  "status": "historical_reference_requires_revalidation",
+  "context": "Taught 2026-10-28 for a sponge at a taped pick spot; not the three-part kit.",
+  "envelope_us": {
+    "base": [
+      1000,
+      2000
+    ],
+    "shoulder": [
+      1000,
+      2000
+    ],
+    "elbow": [
+      1000,
+      2000
+    ],
+    "wrist_pitch": [
+      1180,
+      1980
+    ],
+    "wrist_roll": [
+      1000,
+      2000
+    ],
+    "gripper": [
+      1130,
+      1950
+    ]
+  },
+  "max_speed_us_s": {
+    "base": 400,
+    "shoulder": 300,
+    "elbow": 400,
+    "wrist_pitch": 500,
+    "wrist_roll": 500,
+    "gripper": 600
+  },
+  "poses": [
+    {
+      "name": "HOME",
+      "targets_us": {
+        "base": 1500,
+        "shoulder": 1450,
+        "elbow": 1500,
+        "wrist_pitch": 1600,
+        "wrist_roll": 1500,
+        "gripper": 1500
+      },
+      "complete_vector_us": {
+        "base": 1500,
+        "shoulder": 1450,
+        "elbow": 1500,
+        "wrist_pitch": 1600,
+        "wrist_roll": 1500,
+        "gripper": 1500
+      },
+      "complete_vector_derived": false,
+      "validated_for_current_setup": false
+    },
+    {
+      "name": "MOVE_ABOVE",
+      "targets_us": {
+        "base": 1600,
+        "shoulder": 1230,
+        "elbow": 2000,
+        "wrist_pitch": 1400,
+        "wrist_roll": 1010,
+        "gripper": 1900
+      },
+      "complete_vector_us": {
+        "base": 1600,
+        "shoulder": 1230,
+        "elbow": 2000,
+        "wrist_pitch": 1400,
+        "wrist_roll": 1010,
+        "gripper": 1900
+      },
+      "complete_vector_derived": false,
+      "validated_for_current_setup": false
+    },
+    {
+      "name": "GRASP",
+      "targets_us": {
+        "gripper": 1150
+      },
+      "complete_vector_us": {
+        "base": 1600,
+        "shoulder": 1230,
+        "elbow": 2000,
+        "wrist_pitch": 1400,
+        "wrist_roll": 1010,
+        "gripper": 1150
+      },
+      "complete_vector_derived": true,
+      "validated_for_current_setup": false
+    },
+    {
+      "name": "LIFT",
+      "targets_us": {
+        "base": 1600,
+        "shoulder": 1380,
+        "elbow": 2000,
+        "wrist_pitch": 1250,
+        "wrist_roll": 1010
+      },
+      "complete_vector_us": {
+        "base": 1600,
+        "shoulder": 1380,
+        "elbow": 2000,
+        "wrist_pitch": 1250,
+        "wrist_roll": 1010,
+        "gripper": 1150
+      },
+      "complete_vector_derived": true,
+      "validated_for_current_setup": false
+    },
+    {
+      "name": "HANDOVER",
+      "targets_us": {
+        "base": 1000,
+        "shoulder": 1430,
+        "elbow": 1800,
+        "wrist_pitch": 1200,
+        "wrist_roll": 1010,
+        "gripper": 1150
+      },
+      "complete_vector_us": {
+        "base": 1000,
+        "shoulder": 1430,
+        "elbow": 1800,
+        "wrist_pitch": 1200,
+        "wrist_roll": 1010,
+        "gripper": 1150
+      },
+      "complete_vector_derived": false,
+      "validated_for_current_setup": false
+    },
+    {
+      "name": "RELEASE",
+      "targets_us": {
+        "gripper": 1900
+      },
+      "complete_vector_us": {
+        "base": 1000,
+        "shoulder": 1430,
+        "elbow": 1800,
+        "wrist_pitch": 1200,
+        "wrist_roll": 1010,
+        "gripper": 1900
+      },
+      "complete_vector_derived": true,
+      "validated_for_current_setup": false
+    }
+  ],
+  "notes": [
+    "joint_limits.yaml contains simulator degrees and was not imported.",
+    "Partial targets carry forward the preceding pose only to document the historical sequence.",
+    "Configured envelope endpoints are not measured mechanical stops.",
+    "No pose was executed or activated by this import."
+  ]
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f2ee">
+  <title>Premonition · Lab console</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="/static/unbounded.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/static/app.css?v=20261101-readable">
+  <script src="/static/scene.js?v=20261101-2" defer></script>
+  <script src="/static/app.js?v=20261104-1" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to workspace</a>
+  <header class="topbar"><div class="topbar-inner">
+    <a class="brand" href="/" aria-label="Premonition home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong>premonition<span>LAB / 01</span></strong></a>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#workspace" aria-current="page">Workspace</a><a href="/calibration">Teach arm</a><a href="/autonomy">Autonomy</a><a href="#compare-box" id="evaluation-link">Compare methods</a></nav>
+    <div class="global-actions"><span class="session-state" id="session-state"><i></i> Ready</span><button id="stop" class="button button-stop" type="button" disabled aria-label="Stop execution by software" aria-describedby="stop-help"><span>Stop</span></button><button id="run" class="button button-primary" type="submit" form="form" disabled><span>Start demo</span></button></div>
+  </div></header>
+
+  <main class="page" id="workspace">
+    <div class="workspace-heading"><p>Kit assembly <a class="teach-link" href="/calibration">Teach real arm ↗</a></p><div class="mode-note"><span class="mode-dot"></span><strong id="mode-title">Simulation</strong><small id="tape">Motion off</small></div></div>
+
+    <div class="instrument">
+    <div class="control-bar">
+      <div class="scenario-control"><label for="cases" id="case-label">Test case</label><select id="cases" name="scenario" form="form" aria-describedby="case-description"></select><p id="case-description" class="sr-only"></p></div>
+      <fieldset class="segmented"><legend class="sr-only">Data source</legend><label><input type="radio" name="mode" value="simulation" form="form" checked><span>Simulation</span></label><label><input type="radio" name="mode" value="replay" form="form"><span>Recording</span></label></fieldset>
+      <details class="settings" id="config-box"><summary>Settings <span aria-hidden="true">⌄</span></summary><div class="settings-content"><form id="form">
+        <div class="field"><label for="request">Where should each part go?</label><textarea id="request" maxlength="500" rows="3" spellcheck="false"></textarea></div>
+        <div class="field"><label for="decision-method">How to check each step</label><select id="decision-method"><option value="A2">Measurements only</option><option value="A3">Measurements + image</option></select><p class="field-help" id="method-help">Checks each action using visual measurements.</p></div>
+        <label class="checkbox-label"><input type="checkbox" id="use-meta"><span>Use Meta models<small id="meta-help">API key required.</small></span></label>
+      </form><p class="software-stop-note" id="stop-help">Software stop. Servo power stays on.</p></div></details>
+    </div>
+    <p class="notice" id="notice" role="alert"></p>
+
+    <div class="view-bar"><div class="view-tabs" role="tablist" aria-label="Workspace view"><button id="map-tab" type="button" role="tab" aria-selected="true" aria-controls="state-map">Overview <span>01</span></button><button id="evidence-tab" type="button" role="tab" aria-selected="false" aria-controls="evidence-view" tabindex="-1">Step results <span>02</span></button></div><span class="view-index" id="view-hint">3 parts · 6 actions</span></div>
+
+    <section class="state-map" id="state-map" role="tabpanel" aria-labelledby="map-tab">
+      <canvas id="orbit-canvas" aria-hidden="true"></canvas>
+      <div class="scene-intro"><p class="eyebrow"><span></span> KIT ASSEMBLY DEMO</p><h1>Build a kit.<br>Step by step<span>.</span></h1><p class="scene-description" id="scene-description">Choose a test case, then select Start demo.</p></div>
+      <div class="scene-nodes" aria-label="Part evidence">
+        <button class="part-node" data-part="A" data-state="pending" type="button" aria-label="View results for Part A"><span class="node-target" aria-hidden="true">+</span><span class="node-caption"><strong>PART A</strong><small>Not started</small></span></button>
+        <button class="part-node" data-part="B" data-state="pending" type="button" aria-label="View results for Part B"><span class="node-target" aria-hidden="true">+</span><span class="node-caption"><strong>PART B</strong><small>Not started</small></span></button>
+        <button class="part-node" data-part="C" data-state="pending" type="button" aria-label="View results for Part C"><span class="node-target" aria-hidden="true">+</span><span class="node-caption"><strong>PART C</strong><small>Not started</small></span></button>
+      </div>
+      <div class="scene-bottom"><div class="scene-status"><span class="scene-status-dot" aria-hidden="true"></span><span id="map-status" aria-live="polite">Ready / 3 parts</span><small>Conceptual view</small></div><div class="scene-tools"><span class="orbit-hint">Drag to rotate</span><button id="reset-orbit" type="button" title="Reset view" aria-label="Reset view">↺</button></div></div>
+    </section>
+
+    <div id="evidence-view" role="tabpanel" aria-labelledby="evidence-tab" hidden>
+    <div class="results-empty" id="results-empty"><span class="empty-step" aria-hidden="true">01 → 06</span><h2>No results yet</h2><p>Start a demo to check all three parts.</p><button id="start-from-results" class="button button-primary" type="submit" form="form" disabled><span>Start demo</span></button></div>
+    <div id="results-content" hidden>
+    <section class="evidence-panel" aria-labelledby="evidence-title">
+      <div class="evidence-heading"><h2 id="evidence-title">Check this step</h2><span id="step-label">No active step</span></div>
+      <div class="triptych" aria-label="Step comparison">
+        <figure class="observation"><figcaption><strong>After action</strong><span class="source-label" id="observation-source">SIMULATED</span></figcaption><div class="frame" id="img-observed"></div></figure>
+        <figure class="before"><figcaption><strong>Before action</strong></figcaption><div class="frame" id="img-initial"></div></figure>
+        <figure class="reference"><figcaption><strong>Expected</strong><span class="prediction-label">PREDICTED</span></figcaption><div class="frame" id="img-reference"></div></figure>
+      </div>
+      <div class="run-feedback"><span class="feedback-indicator" id="feedback-indicator" aria-hidden="true"></span><p class="verdict" id="verdict" aria-live="polite">Ready to run</p><span id="progress-label">0 / 6 verified</span></div>
+    </section>
+
+    <section class="sequence-panel" aria-label="Kit sequence"><div class="inspections" id="inspections"></div><ol class="plan" id="plan"></ol></section>
+    </div>
+    </div>
+
+    <div class="utility-bar"><div class="connection"><span>Jetson</span><strong id="jetson">Not checked</strong><button id="check" class="text-button" type="button">Check connection</button></div><span class="utility-separator"></span><div class="connection"><span>Meta</span><strong id="meta">Local demo</strong><span id="meta-tag" class="sr-only">No API key</span></div><span class="utility-separator"></span><div class="connection"><span>Real arm</span><strong>Runs from the terminal</strong><a class="text-button" href="/autonomy">Open Autonomy</a></div><button class="text-button capture-button" id="capture" type="button">Take photo <span aria-hidden="true">↗</span></button></div>
+
+    </div>
+    <div class="details-grid">
+      <details class="detail-section" id="step-details" hidden><summary>Step details <span aria-hidden="true">+</span></summary><section id="detail" aria-live="polite" hidden></section></details>
+      <details class="detail-section" id="run-details"><summary>Demo details <span aria-hidden="true">+</span></summary><p class="provenance" id="provenance">No demo selected.</p><div class="state-grid"><div><h3>Target positions</h3><ul id="requested"></ul></div><div><h3>Observed state</h3><ul id="observed"></ul></div><div><h3>Commands</h3><ul id="commanded"></ul></div><div><h3>Needs review</h3><ul id="uncertainty"></ul></div></div></details>
+      <details class="detail-section" id="compare-box"><summary>Compare methods <span aria-hidden="true">+</span></summary><div class="evaluation-content"><button class="button button-secondary" id="compare" type="button">Run comparison</button><div id="compare-result"></div></div></details>
+      <details class="detail-section photo-panel" id="photo-box" hidden><summary>Camera snapshot <span aria-hidden="true">+</span></summary><div id="photo"></div></details>
+    </div>
+    <footer><span>LOCAL DEMO</span><span>Saved on this device</span></footer>
+  </main>
+</body>
+</html>

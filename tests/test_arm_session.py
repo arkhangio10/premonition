@@ -171,6 +171,20 @@ def test_settle_move_uses_the_per_joint_overshoot(tmp_path, monkeypatch):
     assert [c["targets"]["shoulder"] for c in process.sent()] == [1350, 1400]
 
 
+def test_default_shoulder_preload_matches_the_measured_sixty_us_and_keeps_motion_limits(tmp_path):
+    start = dict(POSITIONS, shoulder=1500)
+    session, process, _ = make_session(tmp_path, process=FakeProcess(ready=start))
+    session.open()
+    session.settle_move({"shoulder": 1400})
+    commands = process.sent()
+    assert [c["targets"]["shoulder"] for c in commands] == [1340, 1400]
+    previous = start
+    for command in commands:
+        step = max(abs(command["targets"][j] - previous[j]) for j in previous)
+        assert step <= 300 and command["duration"] >= .5 and step / command["duration"] <= 300
+        previous = command["targets"]
+
+
 def test_dead_process_marks_session_unusable(tmp_path):
     session, process, _ = make_session(tmp_path, process=FakeProcess(respond=lambda command: None))
     session.open()

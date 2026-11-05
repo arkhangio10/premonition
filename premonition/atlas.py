@@ -18,6 +18,69 @@ STALL_US, STALL_PX = 40, 5
 SETTLE_S = 0.4
 
 
+def configure_tip_detector(capabilities: dict):
+    """Use the same point detector that produced the loaded atlas."""
+    bounds = capabilities.get("marker_hsv")
+    point = capabilities.get("marker_point", "centroid")
+    if point not in ("centroid", "lower_edge"):
+        raise ValueError("invalid atlas marker_point configuration")
+    if bounds is None:
+        visual_servo.MARKER_HSV = None
+        visual_servo.MARKER_POINT = "centroid"
+        visual_servo.MARKER_ROIS = {}
+        visual_servo.MARKER_JAW_DELTA = {}
+        visual_servo.MARKER_ATLAS_GRIPPER_US = 1940
+        return
+    valid = (isinstance(bounds, (list, tuple)) and len(bounds) == 2
+             and all(isinstance(row, (list, tuple)) and len(row) == 3 for row in bounds))
+    if valid:
+        valid = all(type(lo) is int and type(hi) is int and 0 <= lo <= hi <= cap
+                    for lo, hi, cap in zip(*bounds, (179, 255, 255)))
+    if not valid:
+        raise ValueError("invalid atlas marker_hsv configuration")
+    rois = capabilities.get("marker_rois", {})
+    valid = isinstance(rois, dict) and (not rois or set(rois) == {"c922", "usb"})
+    if valid:
+        valid = all(isinstance(box, (list, tuple)) and len(box) == 4
+                    and all(type(v) is int for v in box)
+                    and 0 <= box[0] < box[2] <= 1920 and 0 <= box[1] < box[3] <= 1080
+                    for box in rois.values())
+    if not valid:
+        raise ValueError("invalid atlas marker_rois configuration")
+    delta = capabilities.get("jaw_open_minus_closed_px", {})
+    valid = isinstance(delta, dict) and (not delta or set(delta) == {"c922", "usb"})
+    if valid:
+        valid = all(isinstance(row, (list, tuple)) and len(row) == 2
+                    and all(type(v) in (int, float) and math.isfinite(v) and abs(v) <= 200 for v in row)
+                    for row in delta.values())
+    if not valid:
+        raise ValueError("invalid atlas jaw_open_minus_closed_px configuration")
+    opening = capabilities.get("gripper_us", 1940)
+    if delta and (type(opening) is not int or not 1382 <= opening <= 1940):
+        raise ValueError("invalid atlas jaw reference gripper_us")
+    visual_servo.MARKER_HSV = tuple(tuple(row) for row in bounds)
+    visual_servo.MARKER_POINT = point
+    visual_servo.MARKER_ROIS = {view: list(box) for view, box in rois.items()}
+    visual_servo.MARKER_JAW_DELTA = {view: list(row) for view, row in delta.items()}
+    visual_servo.MARKER_ATLAS_GRIPPER_US = opening if delta else 1940
+
+
+def gripper_projection_shift(view: str, opening: int, reference: int = 1940) -> np.ndarray:
+    if visual_servo.MARKER_HSV is None or not visual_servo.MARKER_JAW_DELTA:
+        return np.zeros(2)
+    return np.asarray(visual_servo.MARKER_JAW_DELTA[view]) * ((opening - reference) / (1940 - 1382))
+
+
+def at_gripper(samples: list, opening: int) -> list:
+    """Reference the measured tip positions to the current opening before choosing a reach seed."""
+    if visual_servo.MARKER_HSV is None or not visual_servo.MARKER_JAW_DELTA:
+        return samples
+    return [dict(s, pulses=dict(s["pulses"], gripper=opening), tip={view: None if point is None else
+                 (np.asarray(point) + gripper_projection_shift(view, opening,
+                     s["pulses"].get("gripper", visual_servo.MARKER_ATLAS_GRIPPER_US))).tolist()
+                 for view, point in s["tip"].items()}) for s in samples]
+
+
 def serpentine(grid) -> list[dict[str, int]]:
     # A closed tour of the shoulder x elbow cells; every base change happens with the shoulder at its highest value.
     shoulders, elbows = grid["shoulder"], grid["elbow"]
@@ -81,7 +144,9 @@ def predict_tip(atlas: list, pose: dict[str, int], joints=("base", "shoulder", "
         sample = min(seen, key=lambda s: float(np.linalg.norm(_scaled(s["pulses"], joints) - here)))
         dq = np.array([pose[j] - sample["pulses"][j] for j in joints], float)
         J = local_jacobian(atlas, sample["pulses"], joints)
-        predicted[view] = (np.asarray(sample["tip"][view]) + J[list(rows)] @ dq).tolist()
+        grip_shift = gripper_projection_shift(view, pose.get("gripper", visual_servo.MARKER_ATLAS_GRIPPER_US),
+                                             sample["pulses"].get("gripper", visual_servo.MARKER_ATLAS_GRIPPER_US))
+        predicted[view] = (np.asarray(sample["tip"][view]) + J[list(rows)] @ dq + grip_shift).tolist()
     return predicted
 
 
@@ -142,7 +207,8 @@ def _rounded(tips: dict) -> dict:
 
 def locate_tips(frames) -> dict:
     if visual_servo.MARKER_HSV is not None:
-        return _rounded({view: visual_servo.locate_marker_tip(frame.image) for view, frame in frames.items()})
+        return _rounded({view: visual_servo.locate_marker_tip(frame.image, visual_servo.MARKER_ROIS.get(view))
+                         for view, frame in frames.items()})
     return locate_tips_blue(frames)
 
 
@@ -203,7 +269,10 @@ def scan(session, cams, grid, out: Path, frames_dir: Path | None = None) -> dict
         repeatability[view] = (round(float(np.sqrt(np.var(points, axis=0).sum())), 2) if len(points) == 3 else None)
     report = {"atlas": atlas, "stalls": stalls, "repeatability_px": repeatability, "repeat_visits": visits,
               "move_s_mean": round(float(np.mean(move_s)), 3) if move_s else None, "stop": stop,
-              "grid": grid, "created_at": datetime.now(timezone.utc).isoformat()}
+              "grid": grid, "created_at": datetime.now(timezone.utc).isoformat(),
+              "marker_hsv": visual_servo.MARKER_HSV, "marker_point": visual_servo.MARKER_POINT,
+              "marker_rois": visual_servo.MARKER_ROIS, "jaw_open_minus_closed_px": visual_servo.MARKER_JAW_DELTA,
+              "gripper_us": session.positions.get("gripper", 1940), "overshoot_us": dict(OVERSHOOT_US)}
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")

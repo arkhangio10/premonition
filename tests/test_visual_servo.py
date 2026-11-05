@@ -172,6 +172,31 @@ def test_marker_tip_is_the_centroid_of_the_magenta_ring(monkeypatch):
     assert abs(x - 900) < 1 and abs(y - 500) < 1
 
 
+def test_long_tip_tape_can_be_measured_at_its_lower_edge(monkeypatch):
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((140, 80, 80), (172, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_POINT", "lower_edge", raising=False)
+    image = np.zeros((1080, 1920, 3), np.uint8)
+    cv2.rectangle(image, (650, 640), (690, 780), (200, 0, 200), -1)
+    x, y = visual_servo.locate_marker_tip(image)
+    assert abs(x - 670) < 1 and 770 <= y <= 780
+
+
+def test_lower_edge_marker_does_not_fall_back_to_blue_when_tape_is_lost(monkeypatch):
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((140, 80, 80), (172, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_POINT", "lower_edge", raising=False)
+    assert visual_servo.locate_marker_tip(arm(BASE_PX["usb"], (900, 500))) is None
+
+
+def test_marker_roi_excludes_a_larger_pink_reflection_outside_the_arm_workspace(monkeypatch):
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((140, 80, 80), (172, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_POINT", "lower_edge")
+    image = np.zeros((1080, 1920, 3), np.uint8)
+    cv2.rectangle(image, (600, 500), (630, 600), (200, 0, 200), -1)
+    cv2.rectangle(image, (0, 900), (500, 1000), (200, 0, 200), -1)
+    x, y = visual_servo.locate_marker_tip(image, roi=(450, 100, 1000, 850))
+    assert abs(x - 615) < 1 and 590 <= y <= 600
+
+
 def test_marker_ignores_red_led_and_orange_sponge(monkeypatch):
     monkeypatch.setattr(visual_servo, "MARKER_HSV", ((140, 80, 80), (172, 255, 255)))
     image = arm(BASE_PX["usb"], (900, 500))
@@ -215,3 +240,12 @@ def test_contaminated_box_still_proposes_a_tight_range(monkeypatch):
         assert not all(l <= v <= h for l, v, h in zip(low, pixel, high))
     accepted = cv2.inRange(cv2.cvtColor(image, cv2.COLOR_BGR2HSV), low, high).mean() / 255
     assert accepted < 0.01
+
+
+def test_marked_tip_rejects_the_larger_weak_reflection_on_the_sponge(monkeypatch):
+    from pathlib import Path
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((150, 35, 170), (173, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_POINT", "lower_edge")
+    image = cv2.imread(str(Path(__file__).parent / "fixtures/daylight_marker_reflection_usb.png"))
+    point = visual_servo.locate_marker_tip(image)
+    assert point is not None and 125 < point[0] < 170 and 65 < point[1] < 90

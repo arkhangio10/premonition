@@ -1,17 +1,20 @@
-"""Grasp then place at base +117 us with the live view on :8767; evidence goes to inspection/autonomy-*-20261103.jpg.
+"""Grasp then place at the approved default destination, with the live view on :8767.
 --learn lets the grasp policy choose each attempt."""
 import json, sys, time
 from pathlib import Path
 import cv2, numpy as np
 sys.path.insert(0, ".")
 from premonition.arm_session import ArmSession
-from premonition.atlas import predict_tip, travel
+from premonition.atlas import configure_tip_detector, predict_tip, travel
+from premonition.autonomy import safe_destination
 from premonition.dual_camera import DualCamera
 from premonition.grasp_policy import make_chooser
 from premonition.skills import grasp, load_memory, observe, place, save_memory
 from premonition.view_check import check_views, shift_atlas
 ROOT = Path("runs")
-atlas = json.loads((ROOT / "real/calibration/capabilities.json").read_text(encoding="utf-8"))["atlas"]
+capabilities = json.loads((ROOT / "real/calibration/capabilities.json").read_text(encoding="utf-8"))
+configure_tip_detector(capabilities)
+atlas = capabilities["atlas"]
 memory = load_memory(ROOT)
 
 def evidence(cams, name):
@@ -45,7 +48,7 @@ with ArmSession("jetson-usb", ROOT) as arm:
         evidence(cams, "autonomy-grasp-20261103")
         if g["ok"]:
             pick = g["pick_pulses"]
-            destination = predict_tip(atlas, dict(pick, base=pick["base"] + 117))
+            destination = safe_destination(None, pick, {}, atlas)
             print("destination", destination)
             p = place(arm, cams, atlas, destination, memory)
             print("place", json.dumps(p)); save_memory(ROOT, memory)

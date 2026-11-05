@@ -79,8 +79,17 @@ def _moves_toward(arm: GraspParams, last_params: dict, directions) -> bool:
     return any((getattr(arm, field) - last_params[field]) * sign > 0 for field, sign in directions)
 
 
-def make_chooser(memory: dict, rng: np.random.Generator):
+def make_chooser(memory: dict, rng: np.random.Generator, repeat_success: bool = False):
+    successful = tuple(arm for arm in ARMS if any(
+        not a.get("legacy") and a.get("skill", "grasp") == "grasp"
+        and (a.get("lifted") is True or a.get("class") == "lifted") and a.get("params") == asdict(arm)
+        for a in memory.get("attempts", []))) if repeat_success else ()
+    def confidence(arm):
+        alpha, beta = posterior(memory["attempts"], arm)
+        return alpha / (alpha + beta)
     def choose(attempts: list[dict]) -> GraspParams:
+        if not attempts and successful:
+            return max(successful, key=confidence)
         pool = ARMS
         if attempts:
             last = attempts[-1]

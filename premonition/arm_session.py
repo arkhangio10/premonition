@@ -11,11 +11,12 @@ from .jetson import inspect_system, read_commanded_pulses, ssh_argv
 from .teaching_hold import require_no_motion_hold
 
 LIMITS_US = {"base": (1000, 2000), "shoulder": (1000, 2000), "elbow": (1000, 2300),
-             "wrist_pitch": (1180, 1980), "wrist_roll": (1000, 2000), "gripper": (1130, 1950)}
-CONTROLLER_SHA256 = "2ab17e54cf8832712f3f1620815964ddeb45172cd68bc55e84e31a8c8a5d0040"
+             "wrist_pitch": (1180, 1980), "wrist_roll": (1000, 2000), "gripper": (1130, 2100)}
+CONTROLLER_SHA256 = "eea719d31191ee5a0f22372ff2995462d5105d5e2b14825b183f594a5d9a9a88"
 CONTROLLER_COMMAND = "python3 /home/abelbrayan/mindarm_arm.py"
 MAX_DELTA_US = 300
 OVERSHOOT_US = {joint: 20 for joint in LIMITS_US}
+OVERSHOOT_US["shoulder"] = 60
 MAX_SPEED_US_S = 300.0
 MIN_DURATION_S = 0.5
 MAX_DURATION_S = 10.0

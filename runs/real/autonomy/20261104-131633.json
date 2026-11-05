@@ -1,0 +1,61 @@
+{
+ "run_id": "20261104-131633",
+ "instruction": "Place the orange sponge on the approved clear area to its left: front [712,842], side [628,628]. This spot becomes clear after picking up the sponge.",
+ "started_at": "2026-11-04T18:16:33.613025+00:00",
+ "phase": "done",
+ "muse": "available",
+ "steps": [],
+ "verdicts": [],
+ "plan": {
+  "destination": "approved clear area to its left on the table",
+  "destination_px": {
+   "c922": [
+    712,
+    842
+   ],
+   "usb": [
+    628,
+    628
+   ]
+  },
+  "feasible": true,
+  "object": "orange sponge",
+  "obstacles": [
+   "blue robot arm base",
+   "loose wires on table",
+   "electronics module with red LED",
+   "power supply unit",
+   "fiducial marker card"
+  ],
+  "reason": "Destination is on the wooden table surface at the approved coordinates and is vacated once the orange sponge is picked up, so it is clear, on-table, and not on top of another object."
+ },
+ "object": {
+  "c922": {
+   "cx": 787.0,
+   "cy": 906.0,
+   "top": 781.0,
+   "bottom": 1047.0,
+   "x0": 623,
+   "x1": 932,
+   "area": 49910
+  },
+  "usb": {
+   "cx": 710.0,
+   "cy": 742.0,
+   "top": 686.0,
+   "bottom": 797.0,
+   "x0": 596,
+   "x1": 800,
+   "area": 18753
+  }
+ },
+ "destination": null,
+ "seconds": 31.5,
+ "meta": {
+  "calls": 1,
+  "usd": 0.0125
+ },
+ "ok": false,
+ "reason": "error: KeyboardInterrupt",
+ "evidence_error": "Camera stream ended: {'c922': 'Preview connection ended.', 'usb': 'Preview connection ended.'}"
+}

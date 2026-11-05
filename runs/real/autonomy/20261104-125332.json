@@ -1,0 +1,107 @@
+{
+ "run_id": "20261104-125332",
+ "instruction": "Place the orange sponge on the approved clear area to its left: front [712,842], side [628,628]. This spot becomes clear after picking up the sponge.",
+ "started_at": "2026-11-04T17:53:32.176779+00:00",
+ "phase": "done",
+ "muse": "available",
+ "steps": [
+  {
+   "ok": false,
+   "reason": "object_not_found",
+   "attempts": 3,
+   "seconds": 34.6,
+   "descents": [],
+   "tries": [
+    {
+     "t": 1793814825.3895195,
+     "skill": "grasp",
+     "params": {
+      "offset_usb_x": 15,
+      "depth_px": 90,
+      "max_steps": 5,
+      "grip_open_us": 1940,
+      "elbow_min_us": 2050
+     },
+     "lifted": false,
+     "class": "reach_failed",
+     "reach": "no_progress",
+     "reach_error_px": {
+      "c922": 28.2,
+      "usb": 30.2
+     },
+     "reach_pulses": {
+      "base": 1611,
+      "shoulder": 1400,
+      "elbow": 2185,
+      "wrist_pitch": 1182,
+      "wrist_roll": 1567,
+      "gripper": 1851
+     },
+     "muse_offset": null,
+     "legacy": false,
+     "seconds": 13.1
+    },
+    {
+     "t": 1793814845.3148556,
+     "skill": "grasp",
+     "params": {
+      "offset_usb_x": 15,
+      "depth_px": 90,
+      "max_steps": 5,
+      "grip_open_us": 1940,
+      "elbow_min_us": 2170
+     },
+     "lifted": false,
+     "class": "reach_failed",
+     "reach": "no_progress",
+     "reach_error_px": {
+      "c922": 29.0,
+      "usb": 39.2
+     },
+     "reach_pulses": {
+      "base": 1657,
+      "shoulder": 1400,
+      "elbow": 2170,
+      "wrist_pitch": 1182,
+      "wrist_roll": 1567,
+      "gripper": 1851
+     },
+     "muse_offset": null,
+     "legacy": false,
+     "seconds": 19.9
+    }
+   ],
+   "phase": "grasp"
+  }
+ ],
+ "verdicts": [],
+ "plan": null,
+ "object": {
+  "c922": {
+   "cx": 767.0,
+   "cy": 866.0,
+   "top": 759.0,
+   "bottom": 979.0,
+   "x0": 640,
+   "x1": 914,
+   "area": 45578
+  },
+  "usb": {
+   "cx": 735.0,
+   "cy": 714.0,
+   "top": 663.0,
+   "bottom": 769.0,
+   "x0": 629,
+   "x1": 816,
+   "area": 16343
+  }
+ },
+ "destination": null,
+ "seconds": 35.7,
+ "meta": {
+  "calls": 1,
+  "usd": 0.0127
+ },
+ "ok": false,
+ "reason": "grasp_object_not_found"
+}

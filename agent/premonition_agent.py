@@ -20,7 +20,7 @@ import uuid
 JOINTS = ["base", "shoulder", "elbow", "wrist_pitch", "wrist_roll", "gripper"]  # índice = canal
 # Envolvente copiada de mindarm_arm.py: límite previo, no calibración revalidada.
 LIMITS_US = {"base": (1000, 2000), "shoulder": (1000, 2000), "elbow": (1000, 2000),
-             "wrist_pitch": (1180, 1980), "wrist_roll": (1000, 2000), "gripper": (1130, 1950)}
+             "wrist_pitch": (1180, 1980), "wrist_roll": (1000, 2000), "gripper": (1130, 2100)}
 MAX_SPEED_US_S = 1000.0
 MAX_DURATION_S = 10.0
 STEP_S = 0.02

@@ -1,7 +1,90 @@
 # Estado del proyecto
 
-Última actualización: 4 de noviembre de 2026, 02:00, America/Lima. Entrega al hackathon: 4 de noviembre
-de 2026, 21:00 de Lima (corte de funciones a las 17:00).
+Última actualización: 4 de noviembre de 2026, 18:05, America/Lima. Entrega al hackathon: 4 de noviembre
+de 2026, 21:00 de Lima (corte de funciones a las 18:00).
+
+## H2 (4 de noviembre): en curso
+
+**Tarea 8, 17:40–18:03: tres ciclos completos X → B con Muse en el lazo, en cinco corridas.** Configuración: agarre y soltada a 2090 µs, destino base 1700, `--repeat-success`, tope de 8 llamadas y USD 0,15 por corrida. La soltada a 2090 está en el código (`RELEASE_OPEN_US`); la apertura de agarre a 2090 se fijó con una variable del script de corrida de la sesión, y la política del repositorio sigue eligiendo 1850 o 1940. Desplazamiento medido en C922: +54 a +56 px hacia B (~2 cm).
+
+| Corrida | Resultado | Agarre | Segundos | Llamadas | USD | Juicio de Muse |
+|---|---|---|---|---|---|---|
+| `20261104-174411` | **completo** | 1.er intento | 44,6 | 3 | 0,03541650 | agarre ✓, colocación ✓ |
+| `20261104-174633` | `ask_human` | 3 `reach_failed` | 34,7 | 2 | 0,02269975 | agarre ✗ (coincide) |
+| `20261104-174939` | **completo** | 4.º intento | 92,7 | 3 | 0,03499575 | agarre ✓, colocación ✗ (falso negativo: la mordaza tapaba la esponja; medido apoyado) |
+| `20261104-175906` | `ask_human` | 3 `reach_failed` | 31,0 | 2 | 0,02154800 | agarre ✗ (coincide) |
+| `20261104-180249` | **completo** | 1.er intento | 43,9 | 3 | 0,03440075 | agarre ✓, colocación ✓ |
+
+- Videos: `inspection/video-174358/`, `video-174619/`, `video-174925/`, `video-175853/` y `video-180236/`. Además hubo un arranque detenido en el preflight por el parpadeo del tag (0 órdenes, 0 llamadas) y uno anterior (`20261104-174050`) detenido por un falso `object_moved`.
+- Los dos `ask_human` ocurrieron con la esponja en x0 ≈ 613–616 px de la C922, en el borde izquierdo del atlas (base 1583). Con la esponja ~1 cm a la derecha de la X (x0 ≥ 630), las tres tomas funcionaron. Un atlas con columna en base 1533 permitiría usar la X.
+- **Cambios de código de esta tanda (cada uno con su prueba; suite completa: 681 aprobadas):**
+  - `RELEASE_OPEN_US` = 2090 en `place()`: a 1850 la espuma quedó trabada en la mordaza; a 2090 se liberó (probado en la mesa).
+  - `released()` lee la altura en la USB: una esponja liberada que se endereza subió su borde superior 12 px en la C922; una trabada subió 57/35 px.
+  - El guardia de aproximación exige que la caja USB se desplace entera: la mesa iluminada pegada a la caja movió solo x1, 96 px.
+  - `place()` sube a la altura de despeje después de juzgar la soltada, para que la foto que recibe Muse muestre la pinza vacía.
+- **Muse en todo el día:** 38 respuestas HTTP 200, USD 0,44439050, más los dos timeouts sin facturación confirmada. Tope total autorizado: USD 1.
+
+**Avance de las 17:10.** Primer ciclo de Tarea 7 con Muse en el lazo físico, pero sin traslado: tomó y soltó en la misma base.
+
+- **Recalibración USB** (se había movido ~27 px y girado ~0,9°). El primer reescaneo falló porque la esponja seguía sobre la X: el brazo la empujó y las pasadas discreparon 25–80 px en ambas vistas. `scan_marked_jaw.py` ahora no mueve si `locate_object` ve la esponja; en las fotos previas de los 7 escaneos del día separa sin errores. Segundo reescaneo activado a las 16:03: 32 posturas, marca visible 100 %, cero saltos, cámara estable 0,64/0,49 px.
+- `20261104-160516.json`: `grasp_object_not_found` a los 10,8 s. En la vista USB nueva la cara se ve lavada (S≈104) y la semilla saturada oscilaba entre 1200 y 4700 px, alrededor del umbral de 3000: el 38 % de los cuadros quietos perdía la esponja. `scene_detect.py` ahora exige área ≥3000 y semilla ≥1000. Da la misma caja exacta donde antes detectaba (8 secuencias de video) y recupera 113/113 cuadros USB de esa corrida. La prueba nueva de `test_scene_detect.py` falló antes del cambio y pasa después; la suite completa terminó con salida 0.
+- `20261104-162331.json`: **ciclo agarre → levantar → soltar con Muse planificando y juzgando**, 44,4 s, 3 llamadas, USD 0,035081. Primer intento con el perfil de H1; la esponja subió ~49 px en C922. Tras abrir y subir 180 µs la esponja no se movió: quedó apoyada. Muse confirmó el agarre; su juicio de colocación fue un falso negativo (con hombro 1400 la mordaza todavía tapa la esponja en las fotos). **Limitación:** tomó en base 1583, borde del atlas e igual al destino A, así que la soltó donde estaba. Video: `inspection/video-162318/`.
+- Esponja en B (base ~1700): `20261104-163857.json` la volcó en el primer intento (la mordaza la tomó por el borde superior) y pidió ayuda tras 3 `reach_failed`; 2 llamadas, USD 0,022738. Un arranque previo se detuvo en el preflight por tag USB no detectado: 0 órdenes y 0 llamadas.
+- **Muñeca:** el canal 4 (`wrist_roll`) inclina la pinza (~90 px en 360 µs). El canal 3 (`wrist_pitch`) la gira ~45–60° entre 1182 y ~1582 µs y casi nada más allá. En B las mordazas abren a lo largo de la cara ancha (~12 cm). Con el canal 3 en 1582 la USB pierde la cinta en parte del espacio; reescaneo con ese giro en curso, pedido por el operador.
+- El reescaneo con el canal 3 en 1582 se detuvo en la 3.ª postura (`usb_tip_lost`); sigue activa la calibración de las 16:03.
+- **Destino B (base 1700), aprobado por el operador a las 17:16:** `DEFAULT_PLACE_BASE_US` 1583 → 1700 y `BASE_RANGE_US` hasta 1700, con sus pruebas. `20261104-171755.json`: agarre al 3.er intento, solo con la mordaza clavada en la espuma; al girar hacia B la esponja se arrastró y la aproximación terminó en `reach_no_progress` (2 llamadas, USD 0,023439).
+- **Pinza más abierta, autorizado por el operador:** límite de la pinza 1950 → 2100 en `mindarm_arm.py` de la Jetson (respaldo `mindarm_arm.py.bak-20261104-1728`; el diff es solo esa línea), en `arm_session.py` y en `agent/premonition_agent.py`; `CONTROLLER_SHA256` actualizado. Vacía, abre de forma pareja hasta 2090 (+25 px en C922). `20261104-172713.json` con apertura 2090: levantó al 3.er intento (Muse lo confirmó), llegó a B, pero `place_not_released`: al soltar la pinza solo abre a `GRIP_OPEN_US` = 1850 y la espuma quedó trabada; además, en base 1700 el destino cae en C922 y≈1045, junto al borde frontal. 3 llamadas, USD 0,035123.
+- La detección del tag ArUco parpadea en ambas vistas (~1 de cada 5 cuadros) y el preflight usa un solo cuadro. La USB sigue derivando: 1,3 → 7 px en 40 min.
+- **Muse en esta tanda:** 13 respuestas HTTP 200, USD 0,14728300 (dry-run 0,009307; corridas 0,021595, 0,035081, 0,022738, 0,023439 y 0,035123). Total confirmado del día: 23 respuestas, USD 0,27194525, más los dos timeouts sin facturación confirmada.
+
+**Avance de las 15:44.** Cuatro corridas físicas de Tarea 7, cero ciclos completos. Las clases registradas de H2 son cinco `reach_failed` y una `too_shallow`; hay además una interrupción sin intento cerrado. La memoria conserva esas clases históricas y un único éxito de H1.
+
+- `20261104-152934.json`: 25,2 s; tres `reach_failed/no_progress`, sin descenso ni cierre. La esponja no fue tocada. Plan agotó 25 s; el juicio quedó bloqueado por la reserva conservadora, no por el tope de llamadas. El costo de USD 0,06996975 es una estimación de timeout, no facturación confirmada.
+- `20261104-153719.json`: 36,7 s; un intento con cinco pasos de descenso y cierre. El video muestra una sujeción y levantamiento breves antes de que el sistema abriera la pinza por la clasificación local `too_shallow`. La siguiente iteración terminó por objeto no encontrado. **Muse sí planificó y juzgó esta corrida física**: plan factible, juicio de agarre fallido y sugerencia `lower_more`; dos respuestas 200, 8,0/9,2 s y USD 0,02222375. No hubo fase de colocación ni ciclo completo.
+- El borde claro de la esponja USB estaba en x≈629 pero el umbral saturado lo situaba en x=743. Ahora solo se incorpora la cara clara conectada a una semilla saturada de al menos 3000 píxeles; se siguen rechazando la mesa marrón, el tablero oscuro y una región clara sin semilla. En 21 muestras del video anterior, el borde USB queda en x=624–629 y no se pierde el objeto. Regresiones con recorte real y escena sintética fallaron antes del cambio y pasaron después.
+- Plan y juicio usan razonamiento `low` y hasta 1024 tokens de salida; las otras consultas visuales conservan sus valores anteriores. Timeout HTTP sigue en 25 s. La regresión comprueba que el juicio cabe en USD 0,15 incluso tras reservar conservadoramente un plan agotado. Nuevo dry-run: 6,6 s y USD 0,00894175.
+- Se reprodujo el falso negativo del levantamiento: antes/después, objeto USB 646→623 px y C922 748→722 px; punta C922 938,9→895,1 px, punta USB oculta después de subir. La regla nueva, en validación, compara objeto y punta dentro de C922 cuando USB pierde la marca y exige además subida USB ≥10 px. La regla lateral habitual se mantiene cuando hay punta USB. No se cambió ningún pulso ni límite de movimiento ni se reclasificó la memoria antigua.
+
+**Contabilidad actual.** Diez respuestas HTTP 200 confirmadas, USD **0,12466250**: ocho planes, un juicio retrospectivo y un juicio de fase en corrida física. Hay dos timeouts con facturación sin confirmar; el último reservó USD 0,06996975. Tope por corrida: 8 llamadas y USD 0,15; total autorizado USD 1.
+
+**Pruebas y estado.** Suite completa anterior: **672 aprobadas**. Corrección de levantamiento: 107 focalizadas aprobadas; suite completa de 676 en curso. Brazo energizado y sin controlador activo: MODE1=33, prescale=121, base 1611, hombro 1621, codo 2202, pitch 1182, roll 1567, pinza 1851. La guía de cámaras está activa para recolocar la esponja en la X; la repetición espera al operador y al cierre de pruebas.
+
+**Evidencia nueva.** `inspection/video-152923/` corresponde a la corrida de tres aproximaciones; `inspection/video-153705/`, a la que descendió y cerró. Fotos de las tres aproximaciones: `inspection/task7-152934-try1-approach.jpg` a `try3`, revisadas sin personas. Hay cuatro fotos privadas de cierre, subida y reapertura de la última corrida, también revisadas sin personas; los videos completos aún requieren revisión individual antes de publicación.
+
+**Corte del operador: 18:00 de Lima.** La entrega permanece a las 21:00. Tarea 7 aún sin ciclo completo; Tarea 8 pendiente. No se acredita todavía un ciclo físico planificado y juzgado por Muse.
+
+**Primeras corridas, hasta las 13:21.** Dos corridas de Tarea 7:
+- `20261104-125332.json`: 35,7 s, 23 órdenes; dos intentos `reach_failed/no_progress` y una tercera iteración sin objeto. Sin descenso, cierre ni colocación.
+- `20261104-131633.json`: 31,5 s, 20 órdenes; interrumpida durante el alcance cuando una mordaza desplazó la esponja al girar. Sin intento de agarre terminado.
+- Tercer arranque, hacia las 14:30: detenido en preflight por movimiento USB de 32,7 px; cero órdenes y cero llamadas de Meta. Se fijó el soporte USB, se dejó holgura al cable y se recalibró para esa posición.
+
+**Preparación medida, 14:46–15:26.**
+- Marca única en el extremo de la mordaza azul; se mide su borde inferior y se cargan del atlas el rango HSV y la zona válida por cámara.
+- La holgura del hombro produjo 45,07 px frontales y 29,53 px laterales entre aproximaciones opuestas. Con precarga de 60 µs, los residuos fueron 0,67 y 0,78 px; con 20 µs eran 21,71 y 13,58 px. Se fijó únicamente el hombro en 60 µs. Se mantienen los límites de pulsos, duración, velocidad y delta por orden.
+- Abrir de 1382 a 1940 desplaza la marca +55,65/−36,15 px en C922 y +10,25/−3,85 px en USB. La predicción, selección de postura inicial y objetivo de agarre consideran la abertura para no confundir la punta abierta con el centro de cierre.
+- Atlas activo: **32 posturas**, dos pasadas completas y concordantes; base 1583–1750, hombro 1400–1640, codo 2170–2290, abertura 1940. Repetibilidad de la primera pasada: 1,60/1,15 px; segunda: 0,57/0,49 px. Cámara estable durante el escaneo: 0,22/0,93 px. Atlas y referencia anteriores respaldados.
+- El preflight ahora usa las esquinas del tag guardadas desde el cuadro original: una foto JPEG de referencia podía perder el tag al decodificarse. La imagen actual debe seguir mostrando el tag. Comprobación posterior: ambas vistas `still/marker`, 0,63 y 2,39 px.
+- Con la esponja presente apareció un reflejo rosa que competía con la cinta en USB. La regresión con el recorte real falló antes de filtrar componentes de saturación mediana inferior a 50. El filtro conserva exactamente las 140 detecciones de las dos pasadas: cero pérdidas y cero desplazamiento añadido. Comprobación en vivo y suite final en curso.
+
+**Muse y presupuesto.** Siete respuestas HTTP 200 confirmadas, USD **0,09349700**: cinco planificaciones de dry-run/corridas hasta las 14:28, un juicio retrospectivo y el nuevo dry-run de las 15:22 (USD 0,01169575). El juicio retrospectivo costó USD 0,01705375 y confirmó el empuje de la segunda aproximación; no dirigió movimientos. Un primer dry-run agotó el timeout de 25 s y su costo facturado no está confirmado. Las dos corridas físicas conservaron cero juicios de fase en vivo: la primera salió antes de solicitarlos y la segunda fue interrumpida. El nuevo plan considera factible el destino A. Tope configurado por corrida: 8 llamadas y USD 0,15; presupuesto total USD 1.
+
+**Destino y perfil.** Aprobación vigente del operador: A, base 1583, sobre la mesa y libre. Se usa esa base fija en lugar de +117 µs y se comprueba que esté cubierta por el atlas. El próximo ensayo comienza con el perfil que levantó en H1: offset 0, profundidad 90, 5 pasos, abertura 1940 y codo mínimo 2050; tras ese primer intento se reanuda la política habitual. El atlas actual limita el codo a su espacio medido.
+
+**Código, cada cambio con su prueba.**
+- `tests/test_autonomy.py`, `test_meta.py` y `test_skills.py`: cierre del registro ante errores/Ctrl+C; escritura atómica de log y memoria; respuestas fuera de esquema; timeout HTTP y espera de juicio de 25 s; conservación del plan y solicitud de juicio tras agarre fallido.
+- `test_autonomy_preflight.py` y `test_view_check.py`: marcador actual obligatorio en ambas vistas; rebase de hasta 10 px traslada el atlas; ECC y deriva mayor detienen antes del controlador. Esquinas guardadas válidas, rechazo de datos inválidos y uso repetido sin acumular desplazamientos.
+- `test_daylight_vision.py` y `test_scene_detect.py`: tag con el mismo diccionario/id y detección diurna de la esponja, HSV (1,130,130)–(20,255,255). La mesa marrón (13,124,150) y el tablero oscuro siguen rechazados.
+- `test_visual_servo.py`, `test_atlas.py` y `test_reach.py`: marca, máscara de zona, rechazo del reflejo, contexto de calibración y corrección de abertura; selección de postura con la pinza cerrada sin duplicar el desplazamiento.
+- `test_arm_session.py`: precarga del hombro de 60 µs y conservación de todos los límites.
+- `test_skills.py` y `test_reach.py`: elevar antes del alcance, abrir al valor elegido y detener antes de cerrar si el objeto se pierde o se desplaza durante la aproximación.
+- `test_grasp_policy.py` y `test_autonomy_preflight.py`: repetir primero un perfil exitoso válido, ignorar registros antiguos/colocaciones y volver después a la política sin repetir el último perfil.
+- Última suite completa aprobada antes del filtro de reflejos: **668 pruebas**. La suite con ese filtro está en ejecución.
+
+**Evidencia y privacidad.** Videos de fallos: `inspection/video-125318/` (376 C922, 236 USB) y `inspection/video-131612/` (301, 189). `inspection/video-142925/` quedó sin cuadros por el aborto previo al servidor. El grabador consume el MJPEG existente y guarda horas de recepción del PC. Las fotos históricas de H1 se respaldaron. Las capturas nuevas siguen pendientes de revisión individual; algunas contienen personas y no deben publicarse.
+
+**Estado actual.** Brazo energizado y quieto. Última lectura: MODE1=33, prescale=121; base 1699, hombro 1641, codo 2290, pitch 1182, roll 1567, pinza 1938. Esponja sobre la X. Se está validando con cámaras antes del siguiente ensayo; sin proceso de control del brazo.
+
+**Pendiente.** Completar Tarea 7 con Muse en el lazo físico, luego tres ciclos completos grabados con resultado, segundos, llamadas y USD por ciclo. Escala de 50 ± 3 mm y holdout de 10 posturas solo después de un éxito y si queda tiempo. El modelo 3D anterior no acredita precisión métrica para el atlas nuevo.
 
 ## H1 (noche del 3 al 4 de noviembre): primer agarre y soltada autónomos con aprendizaje
 

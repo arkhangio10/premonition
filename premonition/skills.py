@@ -7,13 +7,14 @@ from dataclasses import asdict, replace
 from pathlib import Path
 
 from .arm_session import MAX_DELTA_US
-from .atlas import SETTLE_S, locate_tips, stalled
+from .atlas import SETTLE_S, gripper_projection_shift, locate_tips, stalled
 from .grasp_policy import DEFAULT_PARAMS, HELP, classify, upgrade_memory
 from .reach import reach
 from .scene_detect import locate_object
 
 HOVER_PX = 60
 GRIP_OPEN_US = 1850
+RELEASE_OPEN_US = 2090  # wider than any grasp opening: at 1850 the foam stayed wedged on the jaw (4 Nov 17:28)
 GRIP_CLOSED_US = 1382
 DESCENT_US = 60
 LIFT_STEPS = 3
@@ -42,7 +43,9 @@ def load_memory(root: Path) -> dict:
 def save_memory(root: Path, memory: dict):
     path = Path(root) / MEMORY_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(memory, indent=1) + "\n", encoding="utf-8")
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_bytes((json.dumps(memory, indent=1) + "\n").encode("utf-8"))
+    temporary.replace(path)
 
 
 def observe(cams) -> tuple[dict, dict]:
@@ -54,10 +57,16 @@ def _shift(a: dict, b: dict) -> float:
     return math.hypot(b["cx"] - a["cx"], b["cy"] - a["cy"])
 
 
-def lifted(before: dict, after: dict, tip_rise: float | None = None) -> bool:
+def lifted(before: dict, after: dict, tip_rise: float | None = None,
+           front_tip_rise: float | None = None) -> bool:
     # With the tip's own rise known, the object has to follow 40 % of it: a sponge held by one end pivots on the other
     # and its top rose half as much as the tip (4 Nov); one that is not held stays or sinks.
-    need = 25 if tip_rise is None or tip_rise < 10 else max(10, 0.4 * tip_rise)
+    front = (tip_rise is None and front_tip_rise is not None and front_tip_rise >= 10
+             and before.get("c922") and after.get("c922"))
+    if front and before["c922"]["top"] - after["c922"]["top"] < max(10, 0.4 * front_tip_rise):
+        return False
+    # Compare pixels within one camera; the side must also see a rise above jitter.
+    need = 10 if front else 25 if tip_rise is None or tip_rise < 10 else max(10, 0.4 * tip_rise)
     if not before.get("usb") or not after.get("usb") or before["usb"]["top"] - after["usb"]["top"] < need:
         return False
     return not (before.get("c922") and after.get("c922")) or _shift(before["c922"], after["c922"]) >= 10
@@ -67,7 +76,11 @@ def released(before: dict, after: dict) -> bool:
     # Released means it stayed down: a sponge let go above the table falls and shifts, one stuck to a jaw rises with it.
     if not before.get("usb") or not after.get("usb"):
         return False
-    return all(before[v]["top"] - after[v]["top"] < 10 for v in ("c922", "usb") if before.get(v) and after.get(v))
+    # The side view reads height. A freed sponge that straightens raised its front top 12 px (4 Nov 17:36); one still
+    # wedged on the jaw pivots on a corner, so its bottom stays put while its top rises 57 px front and 35 px side.
+    front = before.get("c922") and after.get("c922")
+    return before["usb"]["top"] - after["usb"]["top"] < 10 and not (
+        front and before["c922"]["top"] - after["c922"]["top"] >= 25)
 
 
 def in_contact(object_drop_px: float, tip_drop_px: float) -> bool:
@@ -78,8 +91,11 @@ def grasp_target(obj: dict, memory: dict) -> dict:
     # The front C922 pins only the side (the base turn); its y mixes height and depth, so the side USB sets the hover.
     # On 4 Nov a C922 hover 30 px over the sponge's front edge sat 100 px from where the USB hover put the tip.
     usb, c922 = obj["usb"], obj.get("c922")
-    return {"usb": (usb["x0"] + 15 + memory["grasp_offset_usb_x"], usb["top"] - HOVER_PX),
-            "c922": None if c922 is None else (c922["x0"] + 0.3 * (c922["x1"] - c922["x0"]), None)}
+    opening = memory.get("grip_open_us", 1940)
+    return {"usb": (usb["x0"] + 15 + memory["grasp_offset_usb_x"] + gripper_projection_shift("usb", opening, 1382)[0],
+                    usb["top"] - HOVER_PX),
+            "c922": None if c922 is None else (c922["x0"] + 0.3 * (c922["x1"] - c922["x0"])
+                                               + gripper_projection_shift("c922", opening, 1382)[0], None)}
 
 
 def _vertical(atlas: list, elbow_min_us: int = GRASP_ELBOW_MIN_US) -> list:
@@ -142,23 +158,46 @@ def grasp(session, cams, atlas, memory: dict, advise=None, choose=None, max_atte
         _, objects = observe(cams)
         if objects.get("usb") is None:
             return _result(False, "object_not_found", attempt, began, descents=descents, tries=tries)
+        clearance = max((s["pulses"].get("shoulder", session.positions["shoulder"]) for s in atlas),
+                        default=session.positions["shoulder"])
+        while session.positions["shoulder"] < clearance:
+            session.move({"shoulder": min(clearance, session.positions["shoulder"] + DESCENT_US)})
+        _grip(session, params.grip_open_us)
+        _, objects = observe(cams)
+        if objects.get("usb") is None:
+            return _result(False, "object_not_found", attempt, began, descents=descents, tries=tries)
+        def approach_guard():
+            _, current = observe(cams)
+            side = current.get("usb")
+            if side is None:
+                return "object_lost"
+            # With the jaws still above, a push slides the whole box; sunlit table merging into one side moved only
+            # x1, by 96 px, while x0 and the top held (4 Nov 17:40).
+            slid = _pushed(objects["usb"], side) and abs(side["x0"] - objects["usb"]["x0"]) >= 10
+            if slid or side["top"] - objects["usb"]["top"] >= PUSH_PX:
+                return "object_moved"
+            return None
         moved = reach(session, cams, _vertical(atlas, params.elbow_min_us),
-                      grasp_target(objects, dict(memory, grasp_offset_usb_x=params.offset_usb_x)),
-                      joints=SERVO_JOINTS, tolerance=REACH_TOLERANCE)
-        if not moved["ok"] and choose is None:
+                      grasp_target(objects, dict(memory, grasp_offset_usb_x=params.offset_usb_x, grip_open_us=params.grip_open_us)),
+                      joints=SERVO_JOINTS, tolerance=REACH_TOLERANCE, guard=approach_guard)
+        guard_failure = not moved["ok"] and moved["reason"] in ("object_moved", "object_lost")
+        if not moved["ok"] and choose is None and not guard_failure:
             return _result(False, f"reach_{moved['reason']}", attempt, began, descents=descents, tries=tries)
         if not moved["ok"]:
             # The policy learns from a failed approach too: recorded, never repeated with the same params.
-            record = {"t": time.time(), "skill": "grasp", "params": asdict(params), "lifted": False, "class": "reach_failed",
+            kind = {"object_moved": "pushed", "object_lost": "object_lost"}.get(moved["reason"], "reach_failed")
+            record = {"t": time.time(), "skill": "grasp", "params": asdict(params), "lifted": False, "class": kind,
                       "reach": moved["reason"], "reach_error_px": moved["error_px"], "reach_pulses": dict(moved["pulses"]),
                       "muse_offset": None, "legacy": False,
                       "seconds": round(time.perf_counter() - started, 1)}
             tries.append(record)
             memory.setdefault("attempts", []).append(record)
+            if guard_failure:
+                return _result(False, f"approach_{moved['reason']}", attempt, began, descents=descents, tries=tries,
+                               help=HELP[kind])
             if [t["class"] for t in tries[-3:]] == ["reach_failed"] * 3:
                 break
             continue
-        _grip(session, params.grip_open_us)
         resting = objects["usb"]
         # A resting object that slides sideways is being pushed: stop before it falls over.
         # The inner jaw sinks into the soft top while the outer one goes down outside the edge.
@@ -180,8 +219,11 @@ def grasp(session, cams, atlas, memory: dict, advise=None, choose=None, max_atte
         seen = before.get("usb") and after.get("usb")
         tip_rise = (tips_before["usb"][1] - tips_after["usb"][1]
                     if choose is not None and tips_before.get("usb") and tips_after.get("usb") else None)
-        record = {"t": time.time(), "skill": "grasp", "params": asdict(params), "lifted": lifted(before, after, tip_rise),
-                  "tip_rise_px": tip_rise,
+        front_tip_rise = (tips_before["c922"][1] - tips_after["c922"][1]
+                          if choose is not None and tips_before.get("c922") and tips_after.get("c922") else None)
+        record = {"t": time.time(), "skill": "grasp", "params": asdict(params),
+                  "lifted": lifted(before, after, tip_rise, front_tip_rise),
+                  "tip_rise_px": tip_rise, "tip_rise_c922_px": front_tip_rise,
                   "descent_stop": steps[-1]["stop"] if steps else "lost",
                   "tip_end": steps[-1]["tip"] if steps else None, "resting": resting, "after_lift": after.get("usb"),
                   "after_lift_c922": after.get("c922"),
@@ -226,9 +268,15 @@ def place(session, cams, atlas, destination: dict, memory: dict) -> dict:
         return None
     _descend(session, cams, contact, MAX_DESCENT_STEPS)
     _, before = observe(cams)
-    _grip(session, GRIP_OPEN_US)
+    _grip(session, RELEASE_OPEN_US)
     _lift(session, LIFT_STEPS)
     _, after = observe(cams)
     reason = "placed" if released(before, after) else "not_released"
     memory.setdefault("attempts", []).append({"t": time.time(), "skill": "place", "class": reason, "legacy": False})
+    # Muse judges the next photo: three steps up, the open jaws still overlap the sponge and it read "still clamped"
+    # twice for sponges resting on the table (4 Nov 16:23 and 17:51).
+    clearance = max((s["pulses"].get("shoulder", session.positions["shoulder"]) for s in atlas),
+                    default=session.positions["shoulder"])
+    while session.positions["shoulder"] < clearance:
+        session.move({"shoulder": min(clearance, session.positions["shoulder"] + DESCENT_US)})
     return _result(reason == "placed", reason, 1, began)

@@ -28,6 +28,23 @@ def table_marker(image) -> np.ndarray | None:
     params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
     # The USB view sees the 50 mm tag at ~100 px and slightly blurred: the default 3-23 px window missed it in 2 of 3 frames.
     params.adaptiveThreshWinSizeMin, params.adaptiveThreshWinSizeMax, params.adaptiveThreshWinSizeStep = 3, 53, 4
+    # Sample inside each bit, away from the blurred cell borders; this dictionary corrects one bit.
+    params.perspectiveRemovePixelPerCell = 12
+    params.perspectiveRemoveIgnoredMarginPerCell = 0.35
+    params.errorCorrectionRate = 1.0
+    marker = _detect_table_marker(image, params)
+    if marker is not None:
+        return marker
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    sharp = cv2.addWeighted(gray, 2, cv2.GaussianBlur(gray, (0, 0), 1.0), -1, 0)
+    params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_APRILTAG
+    params.perspectiveRemovePixelPerCell = 4
+    params.perspectiveRemoveIgnoredMarginPerCell = 0.13
+    params.errorCorrectionRate = 0.6
+    return _detect_table_marker(sharp, params)
+
+
+def _detect_table_marker(image, params) -> np.ndarray | None:
     detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50), params)
     corners, ids, _ = detector.detectMarkers(image)
     for found, marker_id in zip(corners, [] if ids is None else ids.ravel()):
@@ -51,9 +68,16 @@ def apply(matrix, point) -> tuple[float, float]:
     return float(a * point[0] + b * point[1] + c), float(d * point[0] + e * point[1] + f)
 
 
-def view_shift(reference, current) -> dict:
+def view_shift(reference, current, reference_marker=None) -> dict:
     """The 2x3 matrix that carries reference pixels to current pixels."""
-    before, after = table_marker(reference), table_marker(current)
+    # Use raw-frame corners saved at calibration: a JPEG can lose a slanted tag.
+    try:
+        before = np.asarray(reference_marker, dtype=np.float32)
+    except (TypeError, ValueError):
+        before = None
+    if before is None or before.shape != (4, 2) or not np.isfinite(before).all():
+        before = table_marker(reference)
+    after = table_marker(current)
     if before is not None and after is not None:
         # On real frames the tag spans ~100 px and its corners jitter 1-3 px: a fitted rotation/scale, extrapolated to
         # TEST_POINTS ~800 px away, read 5-107 px of motion from still cameras. Only the tag's shift is trusted.
@@ -119,7 +143,8 @@ def check_views(root, frames) -> dict:
     views = {}
     for view, frame in frames.items():
         BASE_PX[view] = tuple(reference["base_px"][view])
-        shift = view_shift(cv2.imread(str(path.parent / f"view_reference_{view}.jpg")), frame.image)
+        shift = view_shift(cv2.imread(str(path.parent / f"view_reference_{view}.jpg")), frame.image,
+                           reference_marker=reference.get("marker", {}).get(view))
         decision = decide(shift)
         if shift["method"] == "marker" or decision == "rebase":
             rebase(view, shift["matrix"])

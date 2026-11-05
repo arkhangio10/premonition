@@ -81,7 +81,7 @@ class MetaClient:
     def __init__(self, api_key: str, budget: Budget, http: httpx.Client | None = None,
                  on_usage: Callable[[dict], None] | None = None):
         self.api_key, self.budget, self.on_usage = api_key, budget, on_usage
-        self.http = http or httpx.Client(base_url=BASE_URL, timeout=180.0)
+        self.http = http or httpx.Client(base_url=BASE_URL, timeout=25.0)
 
     def _report(self, **entry):
         if self.on_usage:
@@ -160,11 +160,11 @@ class MetaClient:
         return base64.b64decode(body["data"][0]["b64_json"])
 
     def vision_json(self, system: str, user: str, images: list[tuple[str, bytes]],
-                    schema: dict, schema_name: str) -> str:
+                    schema: dict, schema_name: str, *, max_output: int = 3072,
+                    reasoning_effort: str = "medium") -> str:
         """Compare up to three validated camera frames with structured text output."""
         if not 1 <= len(images) <= 3 or any(not jpeg or len(jpeg) > 2_000_000 for _, jpeg in images):
             raise ValueError("Vision requires 1–3 images of at most 2 MB each.")
-        max_output = 3072
         content = [{"type": "text", "text": user}]
         for label, jpeg in images:
             content.extend([{"type": "text", "text": label},
@@ -172,7 +172,7 @@ class MetaClient:
         payload = {
             "messages": [{"role": "developer", "content": system}, {"role": "user", "content": content}],
             "max_completion_tokens": max_output,
-            "reasoning_effort": "medium",
+            "reasoning_effort": reasoning_effort,
             "response_format": {"type": "json_schema", "json_schema": {
                 "name": schema_name, "strict": True, "schema": schema}},
         }

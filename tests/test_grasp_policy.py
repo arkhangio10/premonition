@@ -100,3 +100,23 @@ def test_legacy_failures_are_kept_but_not_counted():
     assert "failures" not in upgraded and len(upgraded["attempts"]) == 8
     assert all(a["legacy"] and a["class"] == "unclassified" for a in upgraded["attempts"])
     assert posterior(upgraded["attempts"], GraspParams(0, 60, 4, 1850, 2050)) == (1, 1)
+
+
+def test_repeat_success_uses_the_learned_profile_first_then_resumes_learning():
+    best = GraspParams(0, 90, 5, 1940, 2050)
+    memory = {"attempts": [attempt(params=asdict(best), lifted=True, **{"class": "lifted"})]}
+    for seed in range(20):
+        choose = make_chooser(memory, np.random.default_rng(seed), repeat_success=True)
+        assert choose([]) == best
+        failed = attempt(params=asdict(best), **{"class": "pushed"})
+        following = choose([failed])
+        assert following != best and following.offset_usb_x < 0
+
+
+def test_repeat_success_ignores_legacy_place_and_out_of_range_profiles():
+    history = [attempt(params=asdict(ARMS[0]), lifted=True, legacy=True),
+               attempt(params=asdict(ARMS[1]), lifted=True, skill="place"),
+               attempt(params=asdict(GraspParams(0, 90, 5, 1950, 2050)), lifted=True)]
+    memory = {"attempts": history}
+    expected = make_chooser(memory, np.random.default_rng(3))([])
+    assert make_chooser(memory, np.random.default_rng(3), repeat_success=True)([]) == expected

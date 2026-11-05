@@ -15,10 +15,10 @@ from .skills import grasp, place
 
 SIZE = (1920, 1080)
 PLAN_TIMEOUT_S = 30
-JUDGE_TIMEOUT_S = 20
+JUDGE_TIMEOUT_S = 25
 OBJECT_PHRASE = "orange sponge"
-DEFAULT_BASE_SHIFT_US = 117
-BASE_RANGE_US = (1150, 1560)
+DEFAULT_PLACE_BASE_US = 1700
+BASE_RANGE_US = (1150, 1700)
 NEXT_OFFSET = {"shift_outward": -15, "shift_inward": 15, "retry": 0, "lower_more": 0}
 POOL = ThreadPoolExecutor(max_workers=3)
 
@@ -68,7 +68,8 @@ def _wait(future, timeout: float):
 
 def plan_task(client, instruction: str, frames: dict) -> dict:
     images = [("c922 camera (front, above)", _jpeg(frames["c922"])), ("usb camera (second view)", _jpeg(frames["usb"]))]
-    return json.loads(client.vision_json(PLAN_SYSTEM, f"Instruction: {instruction}", images, PLAN_SCHEMA, "arm_task_plan"))
+    return json.loads(client.vision_json(PLAN_SYSTEM, f"Instruction: {instruction}", images, PLAN_SCHEMA, "arm_task_plan",
+                                         max_output=1024, reasoning_effort="low"))
 
 
 def judge(client, phase: str, before: dict, after: dict) -> dict:
@@ -77,9 +78,14 @@ def judge(client, phase: str, before: dict, after: dict) -> dict:
     images = [("usb_before camera", _jpeg(before["usb"])), ("usb_after camera", _jpeg(after["usb"])),
               ("c922_after camera", _jpeg(after["c922"]))]
     try:
-        verdict = json.loads(client.vision_json(JUDGE_SYSTEM, f"Phase: {phase}.", images, VERDICT_SCHEMA, "arm_verdict"))
+        verdict = json.loads(client.vision_json(JUDGE_SYSTEM, f"Phase: {phase}.", images, VERDICT_SCHEMA, "arm_verdict",
+                                                max_output=1024, reasoning_effort="low"))
     except Exception as failure:
         return _local(f"Muse failed: {failure}")
+    if (not isinstance(verdict, dict) or type(verdict.get("success")) is not bool
+            or not isinstance(verdict.get("reason"), str) or not isinstance(verdict.get("next"), str)
+            or verdict["next"] not in VERDICT_SCHEMA["properties"]["next"]["enum"]):
+        return _local("Muse returned an invalid verdict")
     return dict(verdict, source="muse")
 
 
@@ -109,7 +115,8 @@ def _at_base(atlas: list, pick_pulses: dict, base: int) -> dict:
 
 
 def _in_image(point) -> bool:
-    return isinstance(point, list) and len(point) == 2 and 0 <= point[0] < SIZE[0] and 0 <= point[1] < SIZE[1]
+    return (isinstance(point, list) and len(point) == 2 and all(type(c) is int for c in point)
+            and 0 <= point[0] < SIZE[0] and 0 <= point[1] < SIZE[1])
 
 
 def _inside(point, box) -> bool:
@@ -118,13 +125,18 @@ def _inside(point, box) -> bool:
 
 def safe_destination(plan: dict | None, pick_pulses: dict, obj: dict, atlas: list) -> dict:
     # Muse's point only chooses the base angle; height and reach stay those of the pick.
-    default = _at_base(atlas, pick_pulses, pick_pulses["base"] + DEFAULT_BASE_SHIFT_US)
-    if not plan or not plan.get("feasible"):
+    low, high = min(s["pulses"]["base"] for s in atlas), max(s["pulses"]["base"] for s in atlas)
+    if not low <= DEFAULT_PLACE_BASE_US <= high:
+        raise ValueError("approved place base is outside the atlas")
+    default = _at_base(atlas, pick_pulses, DEFAULT_PLACE_BASE_US)
+    if not isinstance(plan, dict) or plan.get("feasible") is not True:
         return default
-    points = plan.get("destination_px") or {}
-    if not all(_in_image(points.get(v)) for v in ("c922", "usb")) or any(_inside(points[v], obj.get(v)) for v in points):
+    points = plan.get("destination_px")
+    if (not isinstance(points, dict) or set(points) != {"c922", "usb"}
+            or not all(_in_image(points[v]) for v in ("c922", "usb"))
+            or any(_inside(points[v], obj.get(v)) for v in points)):
         return default
-    bases = range(BASE_RANGE_US[0], BASE_RANGE_US[1] + 1, 10)
+    bases = range(max(BASE_RANGE_US[0], low), min(BASE_RANGE_US[1], high) + 1, 10)
 
     def distance(base):
         tips = _at_base(atlas, pick_pulses, base)
@@ -157,49 +169,62 @@ def run_task(instruction: str, session, cams, atlas: list, client, memory: dict,
     log = {"run_id": run_id, "instruction": instruction, "started_at": datetime.now(timezone.utc).isoformat(),
            "phase": "planning", "muse": "unavailable" if client is None else "available",
            "steps": [], "verdicts": [], "plan": None, "object": None, "destination": None}
-    pending = []
+    pending, planning = [], None
 
     def save(**changes):
         log.update(changes, seconds=round(time.perf_counter() - began, 1))
         if client is not None:
             log["meta"] = {"calls": client.budget.calls, "usd": round(client.budget.usd, 4)}
-        (log_path / f"{run_id}.json").write_text(json.dumps(log, indent=1) + "\n", encoding="utf-8")
+        path = log_path / f"{run_id}.json"
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_bytes((json.dumps(log, indent=1) + "\n").encode("utf-8"))
+        temporary.replace(path)
 
     def finish(ok: bool, reason: str) -> dict:
+        save(phase="done", ok=ok, reason=reason)
+        if planning is not None and log["plan"] is None:
+            log["plan"] = _wait(planning, PLAN_TIMEOUT_S)
         for phase, future in pending:
             log["verdicts"].append(dict(_wait(future, JUDGE_TIMEOUT_S) or _local("Muse timed out"), phase=phase))
-        _draw(cams.snapshot(), log["object"] or {}, log["destination"], log_path / "latest.jpg")
-        save(phase="done", ok=ok, reason=reason)
+        try:
+            _draw(cams.snapshot(), log["object"] or {}, log["destination"], log_path / "latest.jpg")
+        except Exception as failure:
+            log["evidence_error"] = str(failure)
+        save()
         return {"ok": ok, "reason": reason, "run_id": run_id, "seconds": log["seconds"]}
-
-    frames = cams.snapshot()
-    save()
-    planning = POOL.submit(plan_task, client, instruction, frames) if client else None
-    obj = find_object(client, frames, OBJECT_PHRASE)
-    save(object=obj, phase="grasp")
-    if obj.get("usb") is None:
-        return finish(False, "object_not_found")
 
     def advise(offset: int) -> int | None:
         after = cams.snapshot(after=time.perf_counter() + SETTLE_S)
         verdict = _wait(POOL.submit(judge, client, "grasp", frames, after), JUDGE_TIMEOUT_S) or _local("Muse timed out")
         log["verdicts"].append(dict(verdict, phase="grasp_retry"))
         save()
-        shift = NEXT_OFFSET.get(verdict.get("next"))
+        next_move = verdict.get("next")
+        shift = NEXT_OFFSET.get(next_move) if isinstance(next_move, str) else None
         return None if shift is None else offset + shift
 
-    grasped = grasp(session, cams, atlas, memory, advise=advise if client else None, choose=choose)
-    log["steps"].append(dict(grasped, phase="grasp"))
-    if not grasped["ok"]:
-        return finish(False, f"grasp_{grasped['reason']}")
-    if client:
-        pending.append(("grasp", POOL.submit(judge, client, "grasp", frames, cams.snapshot())))
-    plan = _wait(planning, PLAN_TIMEOUT_S) if planning else None
-    destination = safe_destination(plan, grasped["pick_pulses"], obj, atlas)
-    save(plan=plan, destination=destination, phase="place")
-    before = cams.snapshot()
-    placed = place(session, cams, atlas, destination, memory)
-    log["steps"].append(dict(placed, phase="place"))
-    if client:
-        pending.append(("place", POOL.submit(judge, client, "place", before, cams.snapshot())))
-    return finish(placed["ok"], "done" if placed["ok"] else f"place_{placed['reason']}")
+    try:
+        save()
+        frames = cams.snapshot()
+        planning = POOL.submit(plan_task, client, instruction, frames) if client else None
+        obj = find_object(client, frames, OBJECT_PHRASE)
+        save(object=obj, phase="grasp")
+        if obj.get("usb") is None:
+            return finish(False, "object_not_found")
+        grasped = grasp(session, cams, atlas, memory, advise=advise if client else None, choose=choose)
+        log["steps"].append(dict(grasped, phase="grasp"))
+        if client:
+            pending.append(("grasp", POOL.submit(judge, client, "grasp", frames, cams.snapshot())))
+        if not grasped["ok"]:
+            return finish(False, f"grasp_{grasped['reason']}")
+        plan = _wait(planning, PLAN_TIMEOUT_S) if planning else None
+        destination = safe_destination(plan, grasped["pick_pulses"], obj, atlas)
+        save(plan=plan, destination=destination, phase="place")
+        before = cams.snapshot()
+        placed = place(session, cams, atlas, destination, memory)
+        log["steps"].append(dict(placed, phase="place"))
+        if client:
+            pending.append(("place", POOL.submit(judge, client, "place", before, cams.snapshot())))
+        return finish(placed["ok"], "done" if placed["ok"] else f"place_{placed['reason']}")
+    except (Exception, KeyboardInterrupt) as failure:
+        finish(False, f"error: {str(failure) or type(failure).__name__}")
+        raise

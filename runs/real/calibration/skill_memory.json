@@ -1,6 +1,6 @@
 {
- "grasp_offset_usb_x": 0,
- "successes": 1,
+ "grasp_offset_usb_x": 30,
+ "successes": 7,
  "attempts": [
   {
    "t": 1793687079.9003036,
@@ -1508,6 +1508,1144 @@
    "t": 1793773976.5375714,
    "skill": "place",
    "class": "not_released",
+   "legacy": false
+  },
+  {
+   "t": 1793814825.3895195,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 15,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 28.2,
+    "usb": 30.2
+   },
+   "reach_pulses": {
+    "base": 1611,
+    "shoulder": 1400,
+    "elbow": 2185,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1851
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 13.1
+  },
+  {
+   "t": 1793814845.3148556,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 15,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 29.0,
+    "usb": 39.2
+   },
+   "reach_pulses": {
+    "base": 1657,
+    "shoulder": 1400,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1851
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 19.9
+  },
+  {
+   "t": 1793824181.3907979,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 0,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 0.6,
+    "usb": 84.8
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1640,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1940
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 6.6
+  },
+  {
+   "t": 1793824184.3625875,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 47.2,
+    "usb": 119.1
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1640,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1940
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 3.0
+  },
+  {
+   "t": 1793824187.4028971,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": -15,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 5.1,
+    "usb": 81.2
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1640,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1940
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 3.0
+  },
+  {
+   "t": 1793824660.988601,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 0,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "tip_rise_px": null,
+   "descent_stop": "cap",
+   "tip_end": [
+    674.9,
+    704.6
+   ],
+   "resting": {
+    "cx": 737.0,
+    "cy": 702.0,
+    "top": 633.0,
+    "bottom": 780.0,
+    "x0": 629,
+    "x1": 857,
+    "area": 26072
+   },
+   "after_lift": {
+    "cx": 750.0,
+    "cy": 687.0,
+    "top": 623.0,
+    "bottom": 762.0,
+    "x0": 622,
+    "x1": 847,
+    "area": 20177
+   },
+   "after_lift_c922": {
+    "cx": 792.0,
+    "cy": 844.0,
+    "top": 722.0,
+    "bottom": 978.0,
+    "x0": 617,
+    "x1": 916,
+    "area": 50558
+   },
+   "rise_px": 21.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "too_shallow",
+   "seconds": 26.7
+  },
+  {
+   "t": 1793827435.7280793,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 0,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": true,
+   "tip_rise_px": 32.19999999999993,
+   "tip_rise_c922_px": 22.0,
+   "descent_stop": "cap",
+   "tip_end": [
+    651.3,
+    708.3
+   ],
+   "resting": {
+    "cx": 708.0,
+    "cy": 720.0,
+    "top": 625.0,
+    "bottom": 864.0,
+    "x0": 586,
+    "x1": 815,
+    "area": 38530
+   },
+   "after_lift": {
+    "cx": 721.0,
+    "cy": 689.0,
+    "top": 598.0,
+    "bottom": 786.0,
+    "x0": 586,
+    "x1": 811,
+    "area": 28323
+   },
+   "after_lift_c922": {
+    "cx": 735.0,
+    "cy": 866.0,
+    "top": 736.0,
+    "bottom": 993.0,
+    "x0": 582,
+    "x1": 883,
+    "area": 55478
+   },
+   "rise_px": 26.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 24.4
+  },
+  {
+   "t": 1793827448.4654782,
+   "skill": "place",
+   "class": "placed",
+   "legacy": false
+  },
+  {
+   "t": 1793828365.164915,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 0,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "tip_rise_px": 45.60000000000002,
+   "tip_rise_c922_px": 58.10000000000002,
+   "descent_stop": "reached",
+   "tip_end": [
+    665.7,
+    772.8
+   ],
+   "resting": {
+    "cx": 733.0,
+    "cy": 777.0,
+    "top": 671.0,
+    "bottom": 894.0,
+    "x0": 628,
+    "x1": 839,
+    "area": 33252
+   },
+   "after_lift": {
+    "cx": 737.0,
+    "cy": 801.0,
+    "top": 718.0,
+    "bottom": 877.0,
+    "x0": 645,
+    "x1": 848,
+    "area": 20542
+   },
+   "after_lift_c922": {
+    "cx": 906.0,
+    "cy": 902.0,
+    "top": 839.0,
+    "bottom": 979.0,
+    "x0": 744,
+    "x1": 1062,
+    "area": 32420
+   },
+   "rise_px": -8.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "closed_on_air",
+   "seconds": 32.2
+  },
+  {
+   "t": 1793828381.4605331,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 13.7,
+    "usb": 30.1
+   },
+   "reach_pulses": {
+    "base": 1700,
+    "shoulder": 1523,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1940
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 11.3
+  },
+  {
+   "t": 1793828391.6891065,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 60,
+    "max_steps": 4,
+    "grip_open_us": 1850,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 20.5,
+    "usb": 25.4
+   },
+   "reach_pulses": {
+    "base": 1700,
+    "shoulder": 1527,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1850
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 10.2
+  },
+  {
+   "t": 1793828401.1159916,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 15,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 19.9,
+    "usb": 43.8
+   },
+   "reach_pulses": {
+    "base": 1700,
+    "shoulder": 1516,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 1940
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 9.4
+  },
+  {
+   "t": 1793830689.947114,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 0,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "tip_rise_px": 41.60000000000002,
+   "tip_rise_c922_px": 72.60000000000002,
+   "descent_stop": "stalled",
+   "tip_end": [
+    626.6,
+    555.1
+   ],
+   "resting": {
+    "cx": 720.0,
+    "cy": 728.0,
+    "top": 627.0,
+    "bottom": 873.0,
+    "x0": 601,
+    "x1": 840,
+    "area": 43677
+   },
+   "after_lift": {
+    "cx": 718.0,
+    "cy": 729.0,
+    "top": 627.0,
+    "bottom": 874.0,
+    "x0": 600,
+    "x1": 832,
+    "area": 43413
+   },
+   "after_lift_c922": {
+    "cx": 780.0,
+    "cy": 880.0,
+    "top": 758.0,
+    "bottom": 1013.0,
+    "x0": 629,
+    "x1": 933,
+    "area": 63660
+   },
+   "rise_px": 0.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "jaws_on_top",
+   "seconds": 18.1
+  },
+  {
+   "t": 1793830708.0797162,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": -15,
+    "depth_px": 60,
+    "max_steps": 4,
+    "grip_open_us": 1850,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "tip_rise_px": 37.799999999999955,
+   "tip_rise_c922_px": 100.79999999999995,
+   "descent_stop": "stalled",
+   "tip_end": [
+    618.4,
+    561.1
+   ],
+   "resting": {
+    "cx": 720.0,
+    "cy": 728.0,
+    "top": 626.0,
+    "bottom": 874.0,
+    "x0": 600,
+    "x1": 840,
+    "area": 43781
+   },
+   "after_lift": {
+    "cx": 720.0,
+    "cy": 728.0,
+    "top": 625.0,
+    "bottom": 876.0,
+    "x0": 600,
+    "x1": 833,
+    "area": 43880
+   },
+   "after_lift_c922": {
+    "cx": 781.0,
+    "cy": 880.0,
+    "top": 758.0,
+    "bottom": 1012.0,
+    "x0": 630,
+    "x1": 933,
+    "area": 63629
+   },
+   "rise_px": 2.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "jaws_on_top",
+   "seconds": 18.1
+  },
+  {
+   "t": 1793830733.1365347,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 1940,
+    "elbow_min_us": 2050
+   },
+   "lifted": true,
+   "tip_rise_px": 32.40000000000009,
+   "tip_rise_c922_px": 48.200000000000045,
+   "descent_stop": "pushed",
+   "tip_end": [
+    638.3,
+    686.8
+   ],
+   "resting": {
+    "cx": 721.0,
+    "cy": 729.0,
+    "top": 627.0,
+    "bottom": 875.0,
+    "x0": 600,
+    "x1": 836,
+    "area": 44039
+   },
+   "after_lift": {
+    "cx": 703.0,
+    "cy": 729.0,
+    "top": 635.0,
+    "bottom": 877.0,
+    "x0": 573,
+    "x1": 818,
+    "area": 36928
+   },
+   "after_lift_c922": {
+    "cx": 773.0,
+    "cy": 887.0,
+    "top": 754.0,
+    "bottom": 1018.0,
+    "x0": 598,
+    "x1": 928,
+    "area": 59392
+   },
+   "rise_px": 20.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 21.5
+  },
+  {
+   "t": 1793831244.6310556,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "diverging",
+   "reach_error_px": {
+    "c922": 54.8,
+    "usb": 37.1
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1609,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 11.4
+  },
+  {
+   "t": 1793831253.8190222,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "diverging",
+   "reach_error_px": {
+    "c922": 29.2,
+    "usb": 38.7
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1600,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 9.2
+  },
+  {
+   "t": 1793831275.2936761,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": true,
+   "tip_rise_px": 35.0,
+   "tip_rise_c922_px": null,
+   "descent_stop": "cap",
+   "tip_end": [
+    653.4,
+    706.2
+   ],
+   "resting": {
+    "cx": 705.0,
+    "cy": 724.0,
+    "top": 620.0,
+    "bottom": 876.0,
+    "x0": 586,
+    "x1": 815,
+    "area": 42508
+   },
+   "after_lift": {
+    "cx": 705.0,
+    "cy": 690.0,
+    "top": 588.0,
+    "bottom": 787.0,
+    "x0": 582,
+    "x1": 802,
+    "area": 30121
+   },
+   "after_lift_c922": {
+    "cx": 729.0,
+    "cy": 862.0,
+    "top": 737.0,
+    "bottom": 983.0,
+    "x0": 576,
+    "x1": 881,
+    "area": 58330
+   },
+   "rise_px": 31.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 22.0
+  },
+  {
+   "t": 1793831288.8924882,
+   "skill": "place",
+   "class": "not_released",
+   "legacy": false
+  },
+  {
+   "t": 1793832054.881028,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "pushed",
+   "reach": "object_moved",
+   "reach_error_px": {},
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1640,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 4.5
+  },
+  {
+   "t": 1793832273.2842329,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": true,
+   "tip_rise_px": 42.200000000000045,
+   "tip_rise_c922_px": 48.89999999999998,
+   "descent_stop": "reached",
+   "tip_end": [
+    674.5,
+    712.2
+   ],
+   "resting": {
+    "cx": 718.0,
+    "cy": 728.0,
+    "top": 621.0,
+    "bottom": 881.0,
+    "x0": 599,
+    "x1": 836,
+    "area": 45814
+   },
+   "after_lift": {
+    "cx": 724.0,
+    "cy": 709.0,
+    "top": 589.0,
+    "bottom": 880.0,
+    "x0": 600,
+    "x1": 821,
+    "area": 39068
+   },
+   "after_lift_c922": {
+    "cx": 727.0,
+    "cy": 851.0,
+    "top": 726.0,
+    "bottom": 971.0,
+    "x0": 594,
+    "x1": 891,
+    "area": 55504
+   },
+   "rise_px": 31.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 22.1
+  },
+  {
+   "t": 1793832288.5581825,
+   "skill": "place",
+   "class": "placed",
+   "legacy": false
+  },
+  {
+   "t": 1793832402.0847595,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 22.1,
+    "usb": 26.6
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1609,
+    "elbow": 2191,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 8.5
+  },
+  {
+   "t": 1793832409.5882797,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": -30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 17.4,
+    "usb": 35.2
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1599,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 7.5
+  },
+  {
+   "t": 1793832418.3036873,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 60,
+    "max_steps": 4,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "diverging",
+   "reach_error_px": {
+    "c922": 71.1,
+    "usb": 42.7
+   },
+   "reach_pulses": {
+    "base": 1622,
+    "shoulder": 1640,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 8.7
+  },
+  {
+   "t": 1793832597.572062,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "tip_rise_px": 40.299999999999955,
+   "tip_rise_c922_px": 44.89999999999998,
+   "descent_stop": "pushed",
+   "tip_end": [
+    650.4,
+    548.9
+   ],
+   "resting": {
+    "cx": 719.0,
+    "cy": 735.0,
+    "top": 614.0,
+    "bottom": 886.0,
+    "x0": 609,
+    "x1": 828,
+    "area": 45145
+   },
+   "after_lift": {
+    "cx": 723.0,
+    "cy": 731.0,
+    "top": 613.0,
+    "bottom": 887.0,
+    "x0": 609,
+    "x1": 865,
+    "area": 47255
+   },
+   "after_lift_c922": {
+    "cx": 781.0,
+    "cy": 876.0,
+    "top": 766.0,
+    "bottom": 993.0,
+    "x0": 630,
+    "x1": 928,
+    "area": 61600
+   },
+   "rise_px": 3.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "pushed",
+   "seconds": 21.6
+  },
+  {
+   "t": 1793832615.2808337,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 15,
+    "depth_px": 60,
+    "max_steps": 4,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 30.0,
+    "usb": 27.4
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1625,
+    "elbow": 2246,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 13.7
+  },
+  {
+   "t": 1793832624.467724,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 15,
+    "depth_px": 60,
+    "max_steps": 4,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "diverging",
+   "reach_error_px": {
+    "c922": 28.7,
+    "usb": 45.5
+   },
+   "reach_pulses": {
+    "base": 1625,
+    "shoulder": 1624,
+    "elbow": 2290,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 9.2
+  },
+  {
+   "t": 1793832647.7530751,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": -30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2170
+   },
+   "lifted": true,
+   "tip_rise_px": 21.199999999999932,
+   "tip_rise_c922_px": null,
+   "descent_stop": "reached",
+   "tip_end": [
+    654.9,
+    723.1
+   ],
+   "resting": {
+    "cx": 720.0,
+    "cy": 735.0,
+    "top": 613.73,
+    "bottom": 888.0,
+    "x0": 610,
+    "x1": 828,
+    "area": 45674
+   },
+   "after_lift": {
+    "cx": 713.0,
+    "cy": 728.0,
+    "top": 604.0,
+    "bottom": 885.1900000000023,
+    "x0": 590,
+    "x1": 812,
+    "area": 41582
+   },
+   "after_lift_c922": {
+    "cx": 776.0,
+    "cy": 865.0,
+    "top": 740.0,
+    "bottom": 986.0,
+    "x0": 610,
+    "x1": 917,
+    "area": 58651
+   },
+   "rise_px": 22.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 23.8
+  },
+  {
+   "t": 1793832664.722367,
+   "skill": "place",
+   "class": "placed",
+   "legacy": false
+  },
+  {
+   "t": 1793833153.320818,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 39.1,
+    "usb": 8.9
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1640,
+    "elbow": 2247,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 6.9
+  },
+  {
+   "t": 1793833159.683277,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": -30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2170
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 24.3,
+    "usb": 28.5
+   },
+   "reach_pulses": {
+    "base": 1583,
+    "shoulder": 1596,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 6.4
+  },
+  {
+   "t": 1793833169.9489832,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": false,
+   "class": "reach_failed",
+   "reach": "no_progress",
+   "reach_error_px": {
+    "c922": 6.8,
+    "usb": 26.8
+   },
+   "reach_pulses": {
+    "base": 1610,
+    "shoulder": 1619,
+    "elbow": 2170,
+    "wrist_pitch": 1182,
+    "wrist_roll": 1567,
+    "gripper": 2090
+   },
+   "muse_offset": null,
+   "legacy": false,
+   "seconds": 10.3
+  },
+  {
+   "t": 1793833390.5954256,
+   "skill": "grasp",
+   "params": {
+    "offset_usb_x": 30,
+    "depth_px": 90,
+    "max_steps": 5,
+    "grip_open_us": 2090,
+    "elbow_min_us": 2050
+   },
+   "lifted": true,
+   "tip_rise_px": 30.200000000000045,
+   "tip_rise_c922_px": null,
+   "descent_stop": "reached",
+   "tip_end": [
+    672.7,
+    720.3
+   ],
+   "resting": {
+    "cx": 736.0,
+    "cy": 734.0,
+    "top": 630.0,
+    "bottom": 877.1200000000026,
+    "x0": 614,
+    "x1": 859,
+    "area": 44589
+   },
+   "after_lift": {
+    "cx": 734.0,
+    "cy": 718.0,
+    "top": 609.0,
+    "bottom": 877.0,
+    "x0": 618,
+    "x1": 846,
+    "area": 36100
+   },
+   "after_lift_c922": {
+    "cx": 812.0,
+    "cy": 847.0,
+    "top": 725.0,
+    "bottom": 966.0,
+    "x0": 651,
+    "x1": 949,
+    "area": 55815
+   },
+   "rise_px": 24.0,
+   "muse_offset": null,
+   "legacy": false,
+   "class": "lifted",
+   "seconds": 21.2
+  },
+  {
+   "t": 1793833405.0256746,
+   "skill": "place",
+   "class": "placed",
    "legacy": false
   }
  ]

@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 from .arm_session import LIMITS_US
-from .atlas import GRASP_WRIST, local_jacobian, look, nearest_sample, predict_tip, stalled, travel
+from .atlas import GRASP_WRIST, at_gripper, local_jacobian, look, nearest_sample, predict_tip, stalled, travel
 
 WEIGHTS = {"c922": 0.6, "usb": 1.0}
 C922_GATE_PX = 80
@@ -66,8 +66,17 @@ def _error(target: dict, tip: dict) -> tuple[np.ndarray, np.ndarray, dict]:
 
 
 def reach(session, cams, atlas, target: dict, tolerance={"c922": 30, "usb": 15}, max_moves=12,
-          joints=("base", "shoulder", "elbow")) -> dict:
+          joints=("base", "shoulder", "elbow"), guard=None) -> dict:
     began = time.perf_counter()
+    moves, best, previous, px, trace = 0, math.inf, None, {}, []
+
+    def result(ok, reason):
+        return {"ok": ok, "reason": reason, "moves": moves, "error_px": px, "trace": trace,
+                "pulses": dict(session.positions), "seconds": round(time.perf_counter() - began, 2)}
+
+    if guard and (reason := guard()):
+        return result(False, reason)
+    atlas = at_gripper(atlas, session.positions.get("gripper", 1940))
     # Start above the target so the last approach never comes up from under the object.
     above = [s for s in atlas if s["tip"].get("usb") and s["tip"]["usb"][1] <= target["usb"][1]]
     start = nearest_sample(above or atlas, target)["pulses"]
@@ -75,12 +84,6 @@ def reach(session, cams, atlas, target: dict, tolerance={"c922": 30, "usb": 15},
     J = local_jacobian(atlas, session.positions, joints)
     # Steps stay inside the scanned box: outside it the tip detector is unproven.
     box = {j: (min(s["pulses"][j] for s in atlas) - 1, max(s["pulses"][j] for s in atlas) + 1) for j in joints}
-    moves, best, previous, px, trace = 0, math.inf, None, {}, []
-
-    def result(ok, reason):
-        return {"ok": ok, "reason": reason, "moves": moves, "error_px": px, "trace": trace,
-                "pulses": dict(session.positions), "seconds": round(time.perf_counter() - began, 2)}
-
     def sense():
         tip = look(cams)
         # The C922 detector can jump to the upper arm when the gripper points at that camera.
@@ -93,6 +96,8 @@ def reach(session, cams, atlas, target: dict, tolerance={"c922": 30, "usb": 15},
         return tip, error, weights, px, float(np.linalg.norm(weights * error))
 
     while True:
+        if guard and (reason := guard()):
+            return result(False, reason)
         tip, error, weights, px, size = sense()
         if size > 1.5 * best and tip.get("usb") is not None:  # one jumped frame gets a second look
             tip, error, weights, px, size = sense()

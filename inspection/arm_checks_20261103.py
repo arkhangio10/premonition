@@ -11,7 +11,7 @@ import numpy as np
 
 from premonition import arm_model, visual_servo
 from premonition.arm_session import LIMITS_US, ArmSession
-from premonition.atlas import GRASP_WRIST, SCAN_GRID, VIEW_ROWS, backlash_us, local_jacobian, look, predict_tip, travel
+from premonition.atlas import GRASP_WRIST, SCAN_GRID, VIEW_ROWS, backlash_us, configure_tip_detector, local_jacobian, look, predict_tip, travel
 from premonition.dual_camera import DualCamera
 from premonition.view_check import agreement, check_views, save_reference, shift_atlas, table_marker
 
@@ -264,6 +264,8 @@ def main():
     command.add_argument("--poses", type=int, default=10)
     command.set_defaults(run=holdout)
     args = parser.parse_args()
+    if args.command in ("agree", "backlash", "holdout"):
+        configure_tip_detector(json.loads((ROOT / "real/calibration/capabilities.json").read_bytes()))
     args.run(args)
 
 

@@ -104,6 +104,44 @@ def test_reach_converges_on_simulated_arm_in_few_moves(monkeypatch):
     assert len(result["trace"]) == result["moves"] + 1 and result["trace"][0]["step"] is not None
 
 
+def test_reach_guard_stops_before_any_seed_movement(monkeypatch):
+    session, atlas, target = simulated(monkeypatch)
+    result = reach(session, None, atlas, target, guard=lambda: "object_moved")
+    assert not result["ok"] and result["reason"] == "object_moved" and session.moves == 0
+
+
+def test_reach_guard_stops_after_the_seed_before_correcting(monkeypatch):
+    session, atlas, target = simulated(monkeypatch)
+    checks = iter([None, "object_lost"])
+    seeded = []
+    monkeypatch.setattr(reach_module, "travel", lambda *args: seeded.append(True))
+    result = reach(session, None, atlas, target, guard=lambda: next(checks))
+    assert seeded == [True] and session.moves == 0
+    assert not result["ok"] and result["reason"] == "object_lost" and result["moves"] == 0
+
+
+def test_reach_selects_the_seed_for_the_current_closed_jaw(monkeypatch):
+    from premonition import visual_servo
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((150, 35, 170), (173, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_JAW_DELTA", {"c922": [100, -80], "usb": [80, -80]}, raising=False)
+    monkeypatch.setattr(visual_servo, "MARKER_ATLAS_GRIPPER_US", 1940, raising=False)
+    session = Session(PULSES)
+    atlas = []
+    for pose in serpentine({'base':[1400,1450], 'shoulder':[1540,1500], 'elbow':[2200,2240]}):
+        pixel = A @ np.array([pose[j] for j in JOINTS]) + B
+        atlas.append({'pulses':pose,'tip':{'c922':pixel[:2].tolist(),'usb':pixel[2:].tolist()}})
+    wanted = atlas[-1]
+    target = {v: tuple(np.subtract(wanted["tip"][v], [100, -80] if v == "c922" else [80, -80])) for v in ('c922','usb')}
+    seeded = []
+    def stop_after_seed(arm, pose):
+        seeded.append(pose)
+        raise RuntimeError('seed inspected')
+    monkeypatch.setattr(reach_module, "travel", stop_after_seed)
+    with pytest.raises(RuntimeError, match='seed inspected'):
+        reach(session, None, atlas, target)
+    assert {j:seeded[0][j] for j in JOINTS} == wanted["pulses"]
+
+
 def test_reach_ignores_c922_when_its_tip_is_missing(monkeypatch):
     session, atlas, target = simulated(monkeypatch, hide=("c922",))
     result = reach(session, None, atlas, target)

@@ -2,6 +2,7 @@ import json
 
 import cv2
 import numpy as np
+import pytest
 
 from premonition import visual_servo
 from premonition.arm_session import OVERSHOOT_US
@@ -190,6 +191,8 @@ def test_scan_saves_both_stream_frames_and_the_blue_tip(tmp_path, monkeypatch):
     session = Session({"base": 1450, "shoulder": 1400, "elbow": 2170})
     frames_dir = tmp_path / "frames"
     report = scan(session, Cams(), grid, tmp_path / "out.json", frames_dir)
+    assert "marker_hsv" in report and report["marker_hsv"] is None
+    assert report["overshoot_us"]["shoulder"] == 60
     assert (frames_dir / "000_c922.jpg").read_bytes() == b"jpeg-c922"
     assert (frames_dir / "000_usb.jpg").read_bytes() == b"jpeg-usb"
     blue = report["atlas"][0]["tip_blue"]
@@ -219,3 +222,86 @@ def test_detector_report_counts_disagreements_per_detector():
     report = detector_report(first, second)
     assert report["c922"] == {"visible": 0.75, "jumps_tip": 1, "jumps_blue": 0, "median_tip_vs_blue_px": 4.0}
     assert report["usb"] == {"visible": 0.75, "jumps_tip": 0, "jumps_blue": 1, "median_tip_vs_blue_px": 6.0}
+
+
+def test_atlas_restores_its_own_tip_detector(monkeypatch):
+    from premonition import atlas
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", None)
+    monkeypatch.setattr(visual_servo, "MARKER_POINT", "centroid", raising=False)
+    monkeypatch.setattr(visual_servo, "MARKER_ROIS", {}, raising=False)
+    bounds = [[150, 50, 180], [173, 255, 255]]
+    rois = {"c922": [420, 100, 1150, 1060], "usb": [450, 100, 1000, 850]}
+    atlas.configure_tip_detector({"marker_hsv": bounds, "marker_point": "lower_edge", "marker_rois": rois})
+    assert visual_servo.MARKER_HSV == tuple(tuple(row) for row in bounds)
+    assert visual_servo.MARKER_POINT == "lower_edge"
+    assert visual_servo.MARKER_ROIS == rois
+    atlas.configure_tip_detector({})
+    assert visual_servo.MARKER_HSV is None
+    assert visual_servo.MARKER_POINT == "centroid"
+    assert visual_servo.MARKER_ROIS == {}
+
+
+@pytest.mark.parametrize("rois", [{"unknown": [0, 0, 100, 100]}, {"usb": [-1, 0, 100, 100]},
+    {"usb": [0, 0, 1921, 100]}, {"usb": [100, 100, 10, 10]}, {"usb": [0, 0, 100]}])
+def test_atlas_rejects_an_invalid_marker_workspace(monkeypatch, rois):
+    from premonition import atlas
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", None)
+    with pytest.raises(ValueError, match="marker_rois"):
+        atlas.configure_tip_detector({"marker_hsv": [[150, 50, 180], [173, 255, 255]], "marker_rois": rois})
+
+
+@pytest.mark.parametrize("point", ["unknown", 1, None])
+def test_atlas_rejects_an_unknown_marker_point(monkeypatch, point):
+    from premonition import atlas
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", None)
+    with pytest.raises(ValueError, match="marker_point"):
+        atlas.configure_tip_detector({"marker_hsv": [[150, 50, 180], [173, 255, 255]], "marker_point": point})
+
+
+@pytest.mark.parametrize("bounds", [[], [[150, 50], [173, 255, 255]],
+    [[180, 50, 180], [173, 255, 255]], [[150, -1, 180], [173, 255, 255]],
+    [[150, 50, 180], [173, 256, 255]], [[True, 50, 180], [173, 255, 255]]])
+def test_invalid_atlas_marker_configuration_stops_before_using_it(monkeypatch, bounds):
+    from premonition import atlas
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", None)
+    with pytest.raises(ValueError, match="marker_hsv"):
+        atlas.configure_tip_detector({"marker_hsv": bounds})
+    assert visual_servo.MARKER_HSV is None
+
+
+def jaw_geometry(monkeypatch):
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", ((150, 35, 170), (173, 255, 255)))
+    monkeypatch.setattr(visual_servo, "MARKER_JAW_DELTA", {"c922": [56, -36], "usb": [10, -4]}, raising=False)
+    monkeypatch.setattr(visual_servo, "MARKER_ATLAS_GRIPPER_US", 1940, raising=False)
+
+
+def test_prediction_follows_the_marked_jaw_when_it_closes(monkeypatch):
+    jaw_geometry(monkeypatch)
+    atlas = linear_samples()
+    pose = {"base": 1450, "shoulder": 1480, "elbow": 2170}
+    opened = predict_tip(atlas, dict(pose, gripper=1940))
+    closed = predict_tip(atlas, dict(pose, gripper=1382))
+    assert np.allclose(np.subtract(closed["c922"], opened["c922"]), [-56, 36])
+    assert np.allclose(np.subtract(closed["usb"], opened["usb"]), [-10, 4])
+
+
+def test_referenced_atlas_aperture_never_applies_the_shift_twice(monkeypatch):
+    from premonition import atlas as module
+    jaw_geometry(monkeypatch)
+    samples = linear_samples()
+    before = json.loads(json.dumps(samples))
+    shifted = module.at_gripper(samples, 1382)
+    pose = dict(samples[3]["pulses"], gripper=1382)
+    assert samples == before
+    assert all(s["pulses"]["gripper"] == 1382 for s in shifted)
+    for view in ("c922", "usb"):
+        assert np.allclose(predict_tip(shifted, pose)[view], predict_tip(samples, pose)[view])
+
+
+@pytest.mark.parametrize("delta", [{"usb": [10, 4]}, {"c922": [float("nan"), 1], "usb": [1, 2]},
+    {"c922": [201, 1], "usb": [1, 2]}, {"c922": [1], "usb": [1, 2]}])
+def test_atlas_rejects_invalid_jaw_displacement(monkeypatch, delta):
+    from premonition import atlas as module
+    monkeypatch.setattr(visual_servo, "MARKER_HSV", None)
+    with pytest.raises(ValueError, match="jaw_open_minus_closed_px"):
+        module.configure_tip_detector({"marker_hsv": [[150, 35, 170], [173, 255, 255]], "jaw_open_minus_closed_px": delta})

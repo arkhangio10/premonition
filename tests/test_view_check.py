@@ -166,3 +166,21 @@ def test_next_action_follows_the_check(action, scan_requested, expected):
 def test_next_action_rejects_an_unknown_check():
     with pytest.raises(KeyError):
         next_action({"action": "moved", "views": {}}, True)
+
+
+def test_check_views_uses_saved_corners_when_reference_jpeg_loses_the_tag(tmp_path, monkeypatch):
+    monkeypatch.setitem(BASE_PX, "c922", (1200, 770))
+    scene = world(marker=True)
+    save_reference(tmp_path, frames(c922=camera(scene)))
+    # Compression can make a stored tag undecodable while its raw-frame corners remain valid.
+    cv2.imwrite(str(tmp_path / "real/calibration/view_reference_c922.jpg"), camera(world()))
+    check = check_views(tmp_path, frames(c922=camera(scene, motion(4, -2))))
+    shift = check["views"]["c922"]
+    assert shift["method"] == "marker" and error_px(shift, motion(4, -2)) < 0.5
+
+
+@pytest.mark.parametrize("cached", [[[1, 2]], [[float("nan"), 0]] * 4])
+def test_view_shift_ignores_invalid_saved_corners(cached):
+    image = camera(world(marker=True))
+    shift = view_shift(image, image, reference_marker=cached)
+    assert shift["method"] == "marker" and shift["moved_px"] < 0.5

@@ -13,6 +13,10 @@ TRAVERSED_US = {"base": (1499, 1802), "shoulder": (1367, 1450), "elbow": (1499, 
 BASE_PX = {"c922": (1200, 770), "usb": (1130, 880)}
 # HSV range of the magenta tape on the outer jaw tip; None until it is tried on the hardware.
 MARKER_HSV: tuple[tuple[int, int, int], tuple[int, int, int]] | None = None
+MARKER_POINT = "centroid"
+MARKER_ROIS = {}
+MARKER_JAW_DELTA = {}
+MARKER_ATLAS_GRIPPER_US = 1940
 # Half resolution. Blue parts up to BRIDGE_PX apart there (across the white housing or black servos) are joined
 # at their closest points only, so the gap between forearm and gripper is never filled in.
 TIP_SCALE, MIN_PART_PX, BRIDGE_PX, MAX_BASE_GAP_PX, TIP_BAND_PX = 2, 200, 75, 150, 40
@@ -85,17 +89,29 @@ def locate_tip(image, base=BASE_PX["c922"]) -> tuple[float, float] | None:
     return float((fx.mean() + .5) * TIP_SCALE - .5), float((fy.mean() + .5) * TIP_SCALE - .5)
 
 
-def locate_marker_tip(image) -> tuple[float, float] | None:
-    """Centroid of the largest magenta blob, in the image's own pixels. None while MARKER_HSV is not configured."""
+def locate_marker_tip(image, roi=None) -> tuple[float, float] | None:
+    """Point on the largest tape blob; lower edge is for a long strip on the downward jaw. None if absent."""
     if MARKER_HSV is None:
         return None
-    mask = cv2.inRange(cv2.cvtColor(image, cv2.COLOR_BGR2HSV), MARKER_HSV[0], MARKER_HSV[1])
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, MARKER_HSV[0], MARKER_HSV[1])
+    if roi is not None:
+        x0, y0, x1, y1 = roi
+        restricted = np.zeros_like(mask)
+        restricted[y0:y1, x0:x1] = mask[y0:y1, x0:x1]
+        mask = restricted
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    count, _, stats, centroids = cv2.connectedComponentsWithStats(mask)
-    big = [k for k in range(1, count) if stats[k, cv2.CC_STAT_AREA] >= MARKER_MIN_PX]
+    count, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+    # Keep the pale edge for geometry, but reject weak reflections as whole blobs.
+    big = [k for k in range(1, count) if stats[k, cv2.CC_STAT_AREA] >= MARKER_MIN_PX
+           and np.median(hsv[:, :, 1][labels == k]) >= 50]
     if not big:
         return None
     k = max(big, key=lambda k: stats[k, cv2.CC_STAT_AREA])
+    if MARKER_POINT == "lower_edge":
+        ys, xs = np.nonzero(labels == k)
+        edge = ys >= np.percentile(ys, 90)
+        return float(xs[edge].mean()), float(ys[edge].mean())
     return float(centroids[k][0]), float(centroids[k][1])
 
 

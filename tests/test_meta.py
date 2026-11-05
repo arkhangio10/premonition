@@ -43,6 +43,15 @@ def test_key_is_read_from_the_environment_only(monkeypatch):
     assert client_from_env().api_key == KEY
 
 
+def test_default_meta_client_has_a_25_second_timeout():
+    instance = MetaClient(KEY, Budget(8, 0.15))
+    try:
+        assert instance.http.timeout.read == 25.0
+        assert instance.http.timeout.connect == 25.0
+    finally:
+        instance.http.close()
+
+
 def test_planner_sends_the_documented_structured_output_request(sim_cell, demo_plan):
     seen = {}
 
@@ -187,3 +196,25 @@ def test_error_text_never_contains_the_key():
 def test_chat_response_without_choices_is_a_meta_error():
     with pytest.raises(MetaError):
         client(lambda r: httpx.Response(200, json={"id": "chatcmpl-1"})).chat_json("s", "u", {}, "S")
+
+
+def test_task_judge_still_fits_budget_after_a_plan_timeout():
+    import cv2
+    import numpy as np
+    from types import SimpleNamespace
+    from premonition.autonomy import plan_task, judge
+    requests = []
+    def handler(request):
+        requests.append(json.loads(request.content))
+        if len(requests) == 1:
+            raise httpx.ReadTimeout("plan timed out", request=request)
+        return chat_reply(json.dumps({"success": False, "reason": "no grasp", "next": "ask_human"}))
+    instance = client(handler, budget=Budget(8, 0.15))
+    image = np.zeros((1080, 1920, 3), np.uint8)
+    views = {v: SimpleNamespace(image=image) for v in ("c922", "usb")}
+    with pytest.raises(MetaError):
+        plan_task(instance, "Pick the orange sponge and place it in clear area A left of its start, away from edges.", views)
+    verdict = judge(instance, "grasp", views, views)
+    assert verdict["source"] == "muse"
+    assert instance.budget.calls == 2 and instance.budget.usd < 0.15
+    assert all(r["reasoning_effort"] == "low" and r["max_completion_tokens"] <= 1024 for r in requests)
